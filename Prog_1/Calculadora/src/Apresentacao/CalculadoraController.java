@@ -1,6 +1,8 @@
 package Apresentacao;
 
 import Calculos.Calcular;
+import Calculos.Operacoes.Operacao;
+import Calculos.Operacoes.OperacoesBasicas.Soma;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -39,7 +41,8 @@ public class CalculadoraController {
     void calcularResultado(ActionEvent event) {
         double primeiroValor = Double.parseDouble(txfPrimeiroValor.getText());
         double segundoValor = Double.parseDouble(txfSegundoValor.getText());
-        double resultado = Calcular.soma(primeiroValor, segundoValor, 5);
+        Operacao soma = new Soma();
+        double resultado = Calcular.realizarOperacao(soma, primeiroValor, segundoValor, 5);
         
         txaResultado.setText(String.valueOf(resultado));
     }
