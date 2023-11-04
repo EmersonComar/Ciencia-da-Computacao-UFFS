@@ -2,7 +2,6 @@ package Apresentacao;
 
 import java.net.URL;
 import java.util.ResourceBundle;
-
 import Calculos.Operacoes.Operacao;
 import Calculos.Operacoes.OperacoesBasicas.*;
 import javafx.event.ActionEvent;
@@ -12,6 +11,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Spinner;
+import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
@@ -31,7 +31,7 @@ public class CalculadoraController extends Exception implements Initializable{
     private ChoiceBox<String> chbOperacao;
 
     @FXML
-    private Spinner<?> spnPrecisao;
+    private Spinner<Integer> spnPrecisao;
 
     @FXML
     private TextArea txaResultado;
@@ -44,9 +44,17 @@ public class CalculadoraController extends Exception implements Initializable{
     
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        // configuração do choicebox
         String[] operacoes = {"Soma", "Subtração", "Multiplicação", "Divisão"};
         chbOperacao.getItems().addAll(operacoes);
         chbOperacao.setValue(operacoes[0]);
+
+        // configuração do spinner
+        SpinnerValueFactory<Integer> intervaloValores = new SpinnerValueFactory.IntegerSpinnerValueFactory(0, 10);
+        intervaloValores.setValue(1);
+        spnPrecisao.setValueFactory(intervaloValores);
+        
     }
 
 
@@ -55,9 +63,9 @@ public class CalculadoraController extends Exception implements Initializable{
         try {
             String tipoOperacao = chbOperacao.getValue();
             Operacao operacao = new Soma();
+            int precisao = spnPrecisao.getValue();
 
             switch (tipoOperacao) {
-                case "Soma" -> {operacao = new Soma();}
                 case "Subtração" -> {operacao = new Subtracao();}
                 case "Multiplicação" -> {operacao = new Multiplicacao();}
                 case "Divisão" -> {operacao = new Divisao();}  
@@ -65,10 +73,15 @@ public class CalculadoraController extends Exception implements Initializable{
 
             double primeiroValor = Double.parseDouble(txfPrimeiroValor.getText());
             double segundoValor = Double.parseDouble(txfSegundoValor.getText());
-            double resultado = operacao.executar(primeiroValor, segundoValor, 5);
+            double resultado = operacao.executar(primeiroValor, segundoValor, precisao);
 
-            txaResultado.setText(String.valueOf(resultado));
-            
+            if (precisao == 0){
+                int resultadoInteiro = (int)resultado;
+                txaResultado.setText(String.valueOf(resultadoInteiro));
+            }else{
+                txaResultado.setText(String.valueOf(resultado));
+            }
+
         } catch (NumberFormatException e) {
             Alert alerta = new Alert(AlertType.ERROR);
             exibirAlertas(alerta, "Valor inválido", "Digite apenas valores numéricos.");
