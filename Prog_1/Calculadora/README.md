@@ -1,18 +1,24 @@
-## Getting Started
+## Projeto Calculadora
+Projeto referente ao subtópico: **introdução ao Desenvolvimento Visual para Sistema Desktop.**
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+![print do projeto](https://github.com/EmersonComar/Ciencia-da-Computacao-UFFS/assets/125106356/51a61b08-3f39-402c-b462-355b2ba3298f)
 
-## Folder Structure
 
-The workspace contains two folders by default, where:
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+## Estrutura do projeto
+- `src`: Diretório principal.
+- `src/Apresentacao`: Diretório responsável pela apresentação visual e o controller relacionado a ela.
+- `src/Calculos`: Diretório responsável pela lógica geral dos cálculos.
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+## Dependências
+- [JavaFX](https://openjfx.io/): Para compilar o projeto
+- [Scene Builder](https://gluonhq.com/products/scene-builder/): Para editar a interface gráfica
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+## Compilação
+- [Como usar JavaFX e Scene Builder no VS Code ](https://www.youtube.com/watch?v=A_fF7fl2lAs)
 
-## Dependency Management
+- [Corrigir bug de execução](https://github.com/lucasmoura-dev/corrigirBugJavaFXnoVsCode/blob/main/README.md)
 
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+## Refêrencias
+- [Academia dos Devs](https://www.youtube.com/@AcademiadosDevs)
+- [Bro Code](https://www.youtube.com/@BroCodez)
