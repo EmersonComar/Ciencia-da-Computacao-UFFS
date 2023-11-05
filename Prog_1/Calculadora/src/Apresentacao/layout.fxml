@@ -68,7 +68,10 @@
                         <Font name="Fira Code Regular" size="13.0" />
                      </font>
                   </Label>
-                  <Spinner fx:id="spnPrecisao" GridPane.columnIndex="1" />
+                  <Spinner fx:id="spnPrecisao" GridPane.columnIndex="1">
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor></Spinner>
                   <Label alignment="CENTER" prefHeight="17.0" prefWidth="114.0" text="Operação:" GridPane.rowIndex="1">
                      <font>
                         <Font name="Fira Code Regular" size="13.0" />
@@ -84,6 +87,9 @@
                <font>
                   <Font name="Fira Code Regular" size="15.0" />
                </font>
+               <cursor>
+                  <Cursor fx:constant="HAND" />
+               </cursor>
             </Button>
             <TextArea fx:id="txaResultado" editable="false" prefHeight="200.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="13" />
             <GridPane GridPane.columnIndex="1" GridPane.rowIndex="15">
@@ -100,11 +106,17 @@
                      <font>
                         <Font name="Fira Code Regular" size="15.0" />
                      </font>
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
                   </Button>
                   <Button fx:id="bntCopiar" mnemonicParsing="false" onAction="#copiarResultado" prefHeight="24.0" prefWidth="115.0" text="Copiar">
                      <font>
                         <Font name="Fira Code Regular" size="15.0" />
                      </font>
+                     <cursor>
+                        <Cursor fx:constant="HAND" />
+                     </cursor>
                   </Button>
                </children>
             </GridPane>
