@@ -15,6 +15,8 @@ import javafx.scene.control.SpinnerValueFactory;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 
 public class CalculadoraController extends Exception implements Initializable{
 
@@ -73,6 +75,13 @@ public class CalculadoraController extends Exception implements Initializable{
 
             double primeiroValor = Double.parseDouble(txfPrimeiroValor.getText());
             double segundoValor = Double.parseDouble(txfSegundoValor.getText());
+
+            if((operacao instanceof Divisao) && (segundoValor == 0)){
+                Alert alerta = new Alert(AlertType.ERROR);
+                exibirAlertas(alerta, "Valor inválido", "Não é possível dividir por 0");
+                return;
+            }
+
             double resultado = operacao.executar(primeiroValor, segundoValor, precisao);
 
             if (precisao == 0){
@@ -85,12 +94,17 @@ public class CalculadoraController extends Exception implements Initializable{
         } catch (NumberFormatException e) {
             Alert alerta = new Alert(AlertType.ERROR);
             exibirAlertas(alerta, "Valor inválido", "Digite apenas valores numéricos.");
-        }
+        } 
     }
 
     @FXML
     void copiarResultado(ActionEvent event) {
-
+        Clipboard cp = Clipboard.getSystemClipboard();
+        ClipboardContent conteudo = new ClipboardContent();
+        conteudo.putString(txaResultado.getText());
+        cp.setContent(conteudo);
+        Alert alerta = new Alert(AlertType.INFORMATION);
+        exibirAlertas(alerta, "Copiar", "Valor copiado com sucesso");
     }
 
     @FXML
