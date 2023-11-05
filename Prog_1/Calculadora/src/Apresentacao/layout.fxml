@@ -101,7 +101,7 @@
                         <Font name="Fira Code Regular" size="15.0" />
                      </font>
                   </Button>
-                  <Button fx:id="bntCopiar" mnemonicParsing="false" onAction="#limparResultado" prefHeight="24.0" prefWidth="115.0" text="Copiar">
+                  <Button fx:id="bntCopiar" mnemonicParsing="false" onAction="#copiarResultado" prefHeight="24.0" prefWidth="115.0" text="Copiar">
                      <font>
                         <Font name="Fira Code Regular" size="15.0" />
                      </font>
