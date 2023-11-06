@@ -1,10 +1,6 @@
 ## Projeto Calculadora
 Projeto referente ao subtópico: **introdução ao Desenvolvimento Visual para Sistema Desktop.**
 
-![print do projeto](https://github.com/EmersonComar/Ciencia-da-Computacao-UFFS/assets/125106356/51a61b08-3f39-402c-b462-355b2ba3298f)
-
-
-
 ## Estrutura do projeto
 - `src`: Diretório principal.
 - `src/Apresentacao`: Diretório responsável pela apresentação visual e o controller relacionado a ela.
