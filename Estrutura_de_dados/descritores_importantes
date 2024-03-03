@@ -1,0 +1,17 @@
+Descritor | Função
+
+%c	  | Único caractere
+%s	  | String
+%d	  | Inteiro decimal
+%ld	  | Inteiro logo
+%i	  | Um inteiro (irá detectar a base)
+%li	  | Inteiro longo
+%hi	  | Inteiro curto 
+%hu	  | Inteiro curto sem sinal
+%f	  | Ponto flutuante
+%lf	  | Double
+%Lf	  | Long Double
+%o	  | Octal
+%x	  | Hexadecimal
+%e	  | Notação científica
+
