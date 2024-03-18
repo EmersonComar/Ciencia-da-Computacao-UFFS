@@ -1,43 +1,50 @@
 #include <stdio.h>
 
 int main(void){
-	int operacao;
-	float valor1, valor2, resultado;
+	char operacao;
+	float valor1, valor2, resul;
+	
+	while (1){
+		printf("\nDigite a operação que deseja realizar:\n");
+		printf("/ (divisão)\n");
+		printf("* (multiplicação)\n");
+		printf("- (subtração)\n");
+		printf("+ (soma)\n");
+		printf("@ -> sair do programa\n");
+		printf("-> ");
+		scanf("%c", &operacao);
+		
 
-	printf("== Calculadora ==\n");
-	printf("Digite o primeiro valor: ");
-	scanf("%f", &valor1);
+		if(operacao == '@')
+			return 0;
 
-	printf("Digite o segundo valor: ");
-	scanf("%f", &valor2);
+		if(operacao != '/' && operacao != '*' && operacao != '-' && operacao != '+'){
+			printf("\nDigite uma operação válida\n");
+			continue;
+		}
 
-	printf("Operações: \n");
-	printf("1 - Soma\n");
-	printf("2 - Subtração\n");
-	printf("3 - Multiplicação\n");
-	printf("4 - Divisão\n");
-	printf("-> ");
-	scanf("%d", &operacao);
+		printf("Digite o primeiro valor: ");
+		scanf("%f", &valor1);
 
+		printf("Digite o segundo valor: ");
+		scanf("%f", &valor2);
 
-	switch(operacao){
-		case 1:
-			resultado = valor1 + valor2;
-			break;
-		case 2:
-			resultado = valor1 - valor2;
-			break;
-		case 3:
-			resultado = valor1 * valor2;
-			break;
-		case 4:
-			resultado = valor1 / valor2;
-			break;
-		default:
-			printf("Digite um valor entre 1 e 4\n");
-			return 1;
+		switch(operacao){
+			case '/':
+				resul = valor1 / valor2;
+				break;
+			case '*':
+				resul = valor1 * valor2;
+				break;
+			case '-':
+				resul = valor1 - valor2;
+				break;
+			case '+':
+				resul = valor1 + valor2;
+				break;
+		}
+
+		printf("\nResultado: %.2f %c %.2f = %.2f\n", valor1, operacao, valor2, resul);
 	}
-
-	printf(" = %.2f\n", resultado);
 	return 0;
 }

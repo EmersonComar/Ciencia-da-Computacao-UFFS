@@ -1,24 +1,28 @@
 #include <stdio.h>
 
+int fatorial(int entrada);
+
 int main(void){
 	int entrada, fat;
-	fat = 1;
 
-
-	printf("Digite um valor que deseja calcular o fatorial: ");
+	printf("Digite um valor maior que 1 para calcular o fatorial: ");
 	scanf("%d", &entrada);
 
-	if(entrada < 0){
-		printf("Digite um valor positivo\n");
+	if(entrada < 1){
+		printf("Digite um valor maior que 1\n");
 		return 1;
 	}
 
-	for(int i = 1; i <= entrada; i++){
-		fat *= i;
-	}
-
-	printf(" = %d\n", fat);
-
-
+	fat = fatorial(entrada);
+	printf("Fatorial de %d: %d\n", entrada, fat);
 	return 0;
+}
+
+int fatorial(int entrada){
+	int fat = 1;
+	
+	for(int i = 1; i <= entrada; i++)
+		fat *= i;
+
+	return fat;
 }
