@@ -9,7 +9,7 @@ float **transposta(int m, int n, float **mat){
 	int i, j;
 	float **trp;
 
-	trp = (float **) malloc(n*sizeof(float));
+	trp = (float **) malloc(n*sizeof(float*));
 
 	for(i = 0; i<n; i++)
 		trp[i] = (float *) malloc(m*sizeof(float));
