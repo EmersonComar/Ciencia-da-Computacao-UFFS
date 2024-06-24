@@ -4,112 +4,101 @@
 struct item{
     char abre;
     char fecha;
-    struct item *next;
 };
 typedef struct item Item;
 
-struct pilha{
-    Item *top;
+struct estack{
+    Item elemento;
+    struct estack *next;
 };
-typedef struct pilha Pilha;
+typedef struct estack EStack;
 
-void pilha_cria(Pilha *p);
-int pilha_validar(Pilha *p, char expressao[]);
-void pilha_push(Pilha *p, char l);
-int pilha_pop(Pilha *p, char l);
-void pilha_limpar(Pilha *p);
+struct stack{
+    EStack *head;
+};
+typedef struct stack Stack;
 
-int main(){
-    Pilha p;
-    pilha_cria(&p);
+void initStack(Stack *pilha);
+void pushStack(Stack *pilha, char valor);
+int isEmpty(Stack *pilha);
+int popStack(Stack *pilha, char retirar);
+
+int main(void){
+    Stack pilha;
     char expressao[31];
 
-    printf("Escreva uma expressão de []{}(): ");
+    initStack(&pilha);
+    
+    printf("Digite uma expressão de parentese, colchetes e chaves: ");
     scanf("%30s", expressao);
 
-    if(!pilha_validar(&p, expressao)){
-        printf("Expressão incorreta!\n");
+    printf("Validando..\n");
 
-    }else{
-        printf("Expressão correta!\n");
+    int valor;
+    for(int i=0; expressao[i] != '\0'; i++){
 
+        if(expressao[i] == '(' || expressao[i] == '[' || expressao[i] == '{'){
+            pushStack(&pilha, expressao[i]);
+
+        }else if(expressao[i] == ')' || expressao[i] == ']' || expressao[i] == '}'){
+            valor = popStack(&pilha, expressao[i]);
+        }
+
+        if(valor == 0){
+            printf("Expressão incorreta!\n");
+            exit(0);
+        }
     }
 
-    pilha_limpar(&p);
+    if(isEmpty(&pilha)){
+        printf("Expressão correta!\n");
+    }else{
+        printf("Expressão incorreta!\n");
+    }
+
+
     return 0;
 }
 
-void pilha_cria(Pilha *p){
-    p->top = NULL;
+void initStack(Stack *pilha){
+    pilha->head = NULL;
 }
 
-int pilha_validar(Pilha *p, char expressao[]){
-    int validar = 1;
-
-    for(int i=0; expressao[i] != '\0'; i++){
-        if(expressao[i] == '[' || expressao[i] == '(' || expressao[i] == '{'){
-            pilha_push(p, expressao[i]);
-
-        }else if(expressao[i] == '}' || expressao[i] == ')' || expressao[i] == ']'){
-            validar = pilha_pop(p, expressao[i]);
-        }
-
-        if(!validar)
-            return validar;
-    }
-
-    return validar;
+int isEmpty(Stack *pilha){
+    return (pilha->head == NULL);
 }
 
-void pilha_push(Pilha *p, char l){
-    Item *n = (Item *)malloc(sizeof(Item));
+void pushStack(Stack *pilha, char valor){
+    EStack *novo = (EStack *)malloc(sizeof(EStack));
 
-    if(n == NULL){
-        printf("OOM\n");
-        exit(1);
-    }
-
-    n->abre = l;
-
-    if(l == '['){
-        n->fecha = ']';
-
-    }else if(l == '('){
-        n->fecha = ')';
-
-    }else if(l == '{'){
-        n->fecha = '}';
-
+    novo->next = NULL;
+    novo->elemento.abre = valor;
+    if(valor == '(')
+        novo->elemento.fecha = ')';
+    else if(valor == '[')
+        novo->elemento.fecha = ']';
+    else
+        novo->elemento.fecha = '}';
+    
+    if(isEmpty(pilha)){
+        pilha->head = novo;
     }else{
-        printf("Erro inesperado\n");
-        exit(1);
+        novo->next = pilha->head;
+        pilha->head = novo;
     }
-
-    n->next = p->top;
-    p->top = n;
 }
 
-int pilha_pop(Pilha *p, char l){
-    if(p->top == NULL){
+int popStack(Stack *pilha, char retirar){
+    if(isEmpty(pilha)){
         return 0;
     }
 
-    Item *t = p->top;
-    char valor = t->fecha;
-
-    p->top = t->next;
-    free(t);
-
-    return (valor == l);
-}
-
-void pilha_limpar(Pilha *p){
-    Item *t = p->top;
-
-    while(t != NULL){
-        Item *n = t->next;
-
-        free(t);
-        t = n;
+    if(pilha->head->elemento.fecha == retirar){
+        EStack *aux = pilha->head;
+        pilha->head = pilha->head->next;
+        free(aux);
+        return 1;
     }
+
+    return 0;
 }
