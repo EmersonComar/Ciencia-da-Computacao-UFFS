@@ -64,11 +64,10 @@ Node *adicionarTarefa(Node *root, Tarefa *tarefa){
 }
 
 void exibirTarefa(Node *root){
-    printf("\n=======\n");
     printf("ID: %d\n", root->tarefa->id);
     printf("Descrição: %s\n", root->tarefa->descricao);
     printf("Tempo limite: %.2fh\n", root->tarefa->tempoLimite);
-    printf("Situação: %s\n", root->tarefa->situacao);
+    printf("Situação: %s\n\n", root->tarefa->situacao);
 }
 
 void inOrdem(Node *root){
@@ -87,4 +86,31 @@ void destruirArvore(Node *root){
     free(root->tarefa);
     free(root);
     root = NULL;
+}
+
+int consultarID(Node *root, int valorID){
+    if(root == NULL) return 0;
+
+    if(valorID == root->tarefa->id){
+        return 1;
+    }
+    else if(valorID > root->tarefa->id){
+        return consultarID(root->right, valorID);
+    }else if(valorID < root->tarefa->id){
+        return consultarID(root->left, valorID);
+    }
+
+    return 0;
+}
+
+Node *retornarNodeTarefa(Node *root, int valorID){
+    if(root->tarefa->id == valorID) return root;
+
+    else if(root->tarefa->id > valorID){
+        return retornarNodeTarefa(root->left, valorID);
+    } else if(root->tarefa->id < valorID){
+        return retornarNodeTarefa(root->right, valorID);
+    }
+
+    return NULL;
 }
