@@ -1,8 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 struct t{
     int id;
+    char descricao[21];
+    float tempoLimite;
+    char situacao[11];
 };
 typedef struct t Tarefa;
 
@@ -23,11 +27,15 @@ void iniciarArvore(Tree *tree){
     tree->root = NULL;
 }
 
-Tarefa *criarTarefa(int id){
+Tarefa *criarTarefa(int id, char *descricao, float tempoLimite){
     Tarefa *novo = (Tarefa *) malloc(sizeof(Tarefa));
 
     novo->id = id;
+    novo->tempoLimite = tempoLimite;
+    strcpy(novo->descricao, descricao);
+    strcpy(novo->situacao, "ativo");
 
+    
     return novo;
 }
 
@@ -55,10 +63,18 @@ Node *adicionarTarefa(Node *root, Tarefa *tarefa){
     return root;
 }
 
+void exibirTarefa(Node *root){
+    printf("\n=======\n");
+    printf("ID: %d\n", root->tarefa->id);
+    printf("Descrição: %s\n", root->tarefa->descricao);
+    printf("Tempo limite: %.2f\n", root->tarefa->tempoLimite);
+    printf("Situação: %s\n", root->tarefa->situacao);
+}
+
 void inOrdem(Node *root){
     if(root == NULL) return;
 
     inOrdem(root->left);
-    printf("ID %d\n", root->tarefa->id);
+    exibirTarefa(root);
     inOrdem(root->right);
 }
