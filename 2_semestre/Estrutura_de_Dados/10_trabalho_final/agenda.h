@@ -28,3 +28,5 @@ Node *adicionarTarefa(Node *root, Tarefa *Tarefa);
 void inOrdem(Node *root);
 void exibirTarefa(Node *root);
 void destruirArvore(Node *root);
+int consultarID(Node *root, int valorID);
+Node *retornarNodeTarefa(Node *root, int valorID);

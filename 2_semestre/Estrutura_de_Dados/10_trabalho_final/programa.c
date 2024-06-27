@@ -17,8 +17,15 @@ int main(void){
 
     inOrdem(sentinel.root);
 
+    int id = 4;
 
-    
+    if(consultarID(sentinel.root, id)){
+        printf("ID encontrado\n");
+        exibirTarefa(retornarNodeTarefa(sentinel.root, id));
+    }else{
+        printf("ID não encontrado\n");
+    }
+
     destruirArvore(sentinel.root);
     return 0;
 }
