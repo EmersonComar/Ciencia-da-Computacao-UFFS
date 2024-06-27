@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 
 struct t{
     int id;
@@ -52,4 +53,12 @@ Node *adicionarTarefa(Node *root, Tarefa *tarefa){
     }
 
     return root;
+}
+
+void inOrdem(Node *root){
+    if(root == NULL) return;
+
+    inOrdem(root->left);
+    printf("ID %d\n", root->tarefa->id);
+    inOrdem(root->right);
 }
