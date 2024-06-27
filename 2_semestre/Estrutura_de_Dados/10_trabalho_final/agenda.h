@@ -27,3 +27,4 @@ Node *criarNo(Tarefa *tarefa);
 Node *adicionarTarefa(Node *root, Tarefa *Tarefa);
 void inOrdem(Node *root);
 void exibirTarefa(Node *root);
+void destruirArvore(Node *root);

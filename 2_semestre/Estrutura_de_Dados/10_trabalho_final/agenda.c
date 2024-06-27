@@ -56,7 +56,7 @@ Node *adicionarTarefa(Node *root, Tarefa *tarefa){
 
     if(tarefa->id >= root->tarefa->id){
         root->right = adicionarTarefa(root->right, tarefa);
-    }else if(tarefa->id < root->tarefa->id){
+    }else{
         root->left = adicionarTarefa(root->left, tarefa);
     }
 
@@ -67,7 +67,7 @@ void exibirTarefa(Node *root){
     printf("\n=======\n");
     printf("ID: %d\n", root->tarefa->id);
     printf("Descrição: %s\n", root->tarefa->descricao);
-    printf("Tempo limite: %.2f\n", root->tarefa->tempoLimite);
+    printf("Tempo limite: %.2fh\n", root->tarefa->tempoLimite);
     printf("Situação: %s\n", root->tarefa->situacao);
 }
 
@@ -77,4 +77,14 @@ void inOrdem(Node *root){
     inOrdem(root->left);
     exibirTarefa(root);
     inOrdem(root->right);
+}
+
+void destruirArvore(Node *root){
+    if(root == NULL) return;
+
+    destruirArvore(root->left);
+    destruirArvore(root->right);
+    free(root->tarefa);
+    free(root);
+    root = NULL;
 }
