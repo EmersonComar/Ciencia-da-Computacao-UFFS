@@ -15,8 +15,11 @@ struct tree{
 };
 typedef struct tree Tree;
 
+
+
+
 void iniciarArvore(Tree *tree);
 Tarefa *criarTarefa(int id);
 Node *criarNo(Tarefa *tarefa);
-
 Node *adicionarTarefa(Node *root, Tarefa *Tarefa);
+void inOrdem(Node *root);
