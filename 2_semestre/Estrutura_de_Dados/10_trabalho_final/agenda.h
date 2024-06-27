@@ -1,5 +1,8 @@
 struct t{
     int id;
+    char descricao[21];
+    float tempoLimite;
+    char situacao[11];
 };
 typedef struct t Tarefa;
 
@@ -19,7 +22,8 @@ typedef struct tree Tree;
 
 
 void iniciarArvore(Tree *tree);
-Tarefa *criarTarefa(int id);
+Tarefa *criarTarefa(int id, char *descricao, float tempoLimite);
 Node *criarNo(Tarefa *tarefa);
 Node *adicionarTarefa(Node *root, Tarefa *Tarefa);
 void inOrdem(Node *root);
+void exibirTarefa(Node *root);
