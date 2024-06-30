@@ -114,3 +114,60 @@ Node *retornarNodeTarefa(Node *root, int valorID){
 
     return NULL;
 }
+
+Node *removeAtual(Node *atual){
+    Node *no1, *no2;
+
+    if(atual->left == NULL){
+        no2 = atual->right;
+        free(atual);
+        return no2;
+    }
+
+    no1 = atual;
+    no2 = atual->left;
+
+    while(no2->right != NULL){
+        no1 = no2;
+        no2 = no2->right;
+    }
+
+    if(no1 != atual){
+        no1->right = no2->left;
+        no2->left = atual->left;
+    }
+
+    no2->right = atual->right;
+    free(atual);
+    return no2;
+}
+
+int removerTarefa(Tree *sentinel, int valorID){
+    if(sentinel->root == NULL) return 0;
+
+    Node *anterior = NULL;
+    Node *atual = sentinel->root;
+
+    while(atual != NULL){
+        if(valorID == atual->tarefa->id){
+            if(atual == sentinel->root){
+                sentinel->root = removeAtual(atual);
+            }else{
+                if(anterior->left == atual)
+                    anterior->left = removeAtual(atual);
+                else
+                    anterior->right = removeAtual(atual);
+            }
+
+            return 1;
+        }
+
+        anterior = atual;
+        if(valorID > atual->tarefa->id)
+            atual = atual->right;
+        else
+            atual = atual->left;
+    }
+
+    return 0;
+}

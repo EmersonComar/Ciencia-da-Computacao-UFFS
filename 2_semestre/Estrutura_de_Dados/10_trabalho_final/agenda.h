@@ -30,3 +30,5 @@ void exibirTarefa(Node *root);
 void destruirArvore(Node *root);
 int consultarID(Node *root, int valorID);
 Node *retornarNodeTarefa(Node *root, int valorID);
+int removerTarefa(Tree *sentinel, int valorID);
+Node *removeAtual(Node *atual);
