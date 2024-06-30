@@ -26,7 +26,7 @@ Tarefa *criarTarefa(int id, char *descricao, float tempoLimite);
 Node *criarNo(Tarefa *tarefa);
 Node *adicionarTarefa(Node *root, Tarefa *Tarefa);
 void inOrdem(Node *root);
-void exibirTarefa(Node *root);
+void exibirTarefa(Tarefa *tarefa);
 void destruirArvore(Node *root);
 int consultarID(Node *root, int valorID);
 Node *retornarNodeTarefa(Node *root, int valorID);

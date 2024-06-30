@@ -63,18 +63,18 @@ Node *adicionarTarefa(Node *root, Tarefa *tarefa){
     return root;
 }
 
-void exibirTarefa(Node *root){
-    printf("ID: %d\n", root->tarefa->id);
-    printf("Descrição: %s\n", root->tarefa->descricao);
-    printf("Tempo limite: %.2fh\n", root->tarefa->tempoLimite);
-    printf("Situação: %s\n\n", root->tarefa->situacao);
+void exibirTarefa(Tarefa *tarefa){
+    printf("ID: %d\n", tarefa->id);
+    printf("Descrição: %s\n", tarefa->descricao);
+    printf("Tempo limite: %.2fh\n", tarefa->tempoLimite);
+    printf("Situação: %s\n\n", tarefa->situacao);
 }
 
 void inOrdem(Node *root){
     if(root == NULL) return;
 
     inOrdem(root->left);
-    exibirTarefa(root);
+    exibirTarefa(root->tarefa);
     inOrdem(root->right);
 }
 

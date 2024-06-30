@@ -22,7 +22,7 @@ int main(void){
 
     if(consultarID(sentinel.root, id)){
         printf("ID encontrado\n");
-        exibirTarefa(retornarNodeTarefa(sentinel.root, id));
+        exibirTarefa(retornarNodeTarefa(sentinel.root, id)->tarefa);
     }else{
         printf("ID não encontrado\n");
     }
