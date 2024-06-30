@@ -22,6 +22,17 @@ struct tree{
 };
 typedef struct tree Tree;
 
+struct lo{
+    Tarefa *tarefa;
+    struct lo *next;
+};
+typedef struct lo ListaOrdenada;
+
+
+void iniciarLista(ListaOrdenada *lista){
+    lista->next = NULL;
+    lista->tarefa = NULL;
+}
 
 void iniciarArvore(Tree *tree){
     tree->root = NULL;
@@ -170,4 +181,63 @@ int removerTarefa(Tree *sentinel, int valorID){
     }
 
     return 0;
+}
+
+ListaOrdenada *criarLista(Tarefa *tarefa){
+    ListaOrdenada *novo = (ListaOrdenada *)malloc(sizeof(ListaOrdenada));
+
+    novo->tarefa = tarefa;
+    novo->next = NULL;
+
+    return novo;
+}
+
+void popularLista(ListaOrdenada *lista, ListaOrdenada *novo){
+    if(lista->next == NULL){
+        lista->next = novo;
+        return;
+    }
+
+    ListaOrdenada *anterior = NULL;
+    ListaOrdenada *aux = lista->next;
+
+    while(aux->next != NULL){
+        anterior = aux;
+        aux = aux->next;
+    }
+
+    printf("Valor do ID do aux: %d\n", aux->tarefa->id);
+
+    if(novo->tarefa->tempoLimite < aux->tarefa->tempoLimite){
+        if(anterior != NULL){
+            anterior->next = novo;
+            novo->next = aux;
+        }else{
+            lista->next = novo;
+            novo->next = aux;
+        }
+    }else{
+        aux->next = novo;
+    }
+
+}
+
+void exibirLista(ListaOrdenada *lista){
+    for(ListaOrdenada *aux = lista->next; aux != NULL; aux = aux->next){
+        exibirTarefa(aux->tarefa);
+    }
+}
+
+void ordenarTarefasAtivasTempo(Node *root, ListaOrdenada *lista){
+    if(root == NULL) return;
+    
+    
+    ordenarTarefasAtivasTempo(root->left, lista);
+    ordenarTarefasAtivasTempo(root->right, lista);
+
+    if(strcmp(root->tarefa->situacao, "ativo") == 0){
+        ListaOrdenada *novo = criarLista(root->tarefa);
+        popularLista(lista, novo);
+    }
+
 }
