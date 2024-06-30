@@ -18,9 +18,14 @@ struct tree{
 };
 typedef struct tree Tree;
 
+struct lo{
+    Tarefa *tarefa;
+    struct lo *next;
+};
+typedef struct lo ListaOrdenada;
 
 
-
+void iniciarLista(ListaOrdenada *lista);
 void iniciarArvore(Tree *tree);
 Tarefa *criarTarefa(int id, char *descricao, float tempoLimite);
 Node *criarNo(Tarefa *tarefa);
@@ -32,3 +37,6 @@ int consultarID(Node *root, int valorID);
 Node *retornarNodeTarefa(Node *root, int valorID);
 int removerTarefa(Tree *sentinel, int valorID);
 Node *removeAtual(Node *atual);
+ListaOrdenada *criarLista(Tarefa *tarefa);
+void ordenarTarefasAtivasTempo(Node *root, ListaOrdenada *lista);
+void exibirLista(ListaOrdenada *lista);
