@@ -206,8 +206,6 @@ void popularLista(ListaOrdenada *lista, ListaOrdenada *novo){
         aux = aux->next;
     }
 
-    printf("Valor do ID do aux: %d\n", aux->tarefa->id);
-
     if(novo->tarefa->tempoLimite < aux->tarefa->tempoLimite){
         if(anterior != NULL){
             anterior->next = novo;
@@ -240,4 +238,14 @@ void ordenarTarefasAtivasTempo(Node *root, ListaOrdenada *lista){
         popularLista(lista, novo);
     }
 
+}
+
+void destruirLista(ListaOrdenada *lista){
+    ListaOrdenada *aux = lista->next;
+
+    while(aux != NULL){
+        ListaOrdenada *atual = aux;
+        aux = aux->next;
+        free(atual);
+    }
 }

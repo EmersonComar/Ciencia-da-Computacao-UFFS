@@ -25,5 +25,6 @@ int main(void){
     exibirLista(&lista);
 
     destruirArvore(sentinel.root);
+    destruirLista(&lista);
     return 0;
 }
