@@ -40,3 +40,4 @@ Node *removeAtual(Node *atual);
 ListaOrdenada *criarLista(Tarefa *tarefa);
 void ordenarTarefasAtivasTempo(Node *root, ListaOrdenada *lista);
 void exibirLista(ListaOrdenada *lista);
+void destruirLista(ListaOrdenada *lista);
