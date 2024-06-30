@@ -1,28 +1,34 @@
 #include "agenda.h"
 #include <stdio.h>
 
+int menu(){
+    int opt;
+    printf("1 - Adicionar tarefa\n");
+    printf("2 - Remover tarefa\n");
+    printf("3 - Visualizar todas as tarefas\n");
+    printf("4 - Visualizar tarefas ativas\n");
+    printf("5 - Visualizar tarefas concluídas\n");
+    printf("6 - Concluir tarefa\n");
+    printf("-> ");
+    scanf("%d", &opt);
+    return opt;
+}
+
 int main(void){
     Tree sentinel;
     ListaOrdenada lista;
 
-    iniciarLista(&lista);
     iniciarArvore(&sentinel);
-    
-    
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(2, "Basaltica", 10.4f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(9, "Trabalho prog", 8.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(11, "DaCasa", 15.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(16, "Boliche", 3.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(14, "kart", 2.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(13, "puteiro", 2.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(12, "Cineminha", 2.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(1, "Cineminha", 2.0f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(1, "Cineminha", 0.01f));
-    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(1, "Cineminha", 30.0f));
+    iniciarLista(&lista);
+
+    int opt = 0;
+
+    do{
+        opt = menu();
+
+    }while (opt != 6);
 
 
-    ordenarTarefasAtivasTempo(sentinel.root, &lista);
-    exibirLista(&lista);
 
     destruirArvore(sentinel.root);
     destruirLista(&lista);
