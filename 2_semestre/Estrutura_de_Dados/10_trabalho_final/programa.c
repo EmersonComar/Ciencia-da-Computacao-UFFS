@@ -14,6 +14,7 @@ int main(void){
     sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(14, "kart", 2.0f));
     sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(13, "puteiro", 2.0f));
     sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(12, "Cineminha", 2.0f));
+    sentinel.root = adicionarTarefa(sentinel.root, criarTarefa(1, "Cineminha", 2.0f));
 
     inOrdem(sentinel.root);
 
@@ -25,6 +26,13 @@ int main(void){
     }else{
         printf("ID não encontrado\n");
     }
+
+    if(removerTarefa(&sentinel, 2)){
+        printf("\nNó 2 removido com sucesso\n");
+    }
+
+
+    inOrdem(sentinel.root);
 
     destruirArvore(sentinel.root);
     return 0;
