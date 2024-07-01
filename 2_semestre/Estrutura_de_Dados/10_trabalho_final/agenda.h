@@ -42,3 +42,4 @@ void ordenarTarefasAtivasTempo(Node *root, ListaOrdenada *lista);
 void exibirLista(ListaOrdenada *lista);
 void destruirLista(ListaOrdenada *lista);
 void ordenarSituacao(Node *root, ListaOrdenada *lista, char *situacao);
+void alterarStatus(Tarefa *tarefa);

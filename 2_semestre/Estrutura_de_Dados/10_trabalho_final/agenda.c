@@ -248,3 +248,8 @@ void ordenarSituacao(Node *root, ListaOrdenada *lista, char *situacao){
         popularLista(lista, novo);
     }
 }
+
+void alterarStatus(Tarefa *tarefa){
+    if(strcmp(tarefa->situacao, "ativo") == 0)
+        strcpy(tarefa->situacao, "concluido");
+}
