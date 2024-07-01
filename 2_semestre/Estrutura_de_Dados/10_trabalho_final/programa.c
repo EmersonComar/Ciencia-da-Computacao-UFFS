@@ -68,6 +68,20 @@ void apagarTarefa(Tree *sentinel){
     }
 }
 
+void listarTodos(Tree *sentinel){
+    ListaOrdenada listaTemp;
+    iniciarLista(&listaTemp);
+
+    ordenarSituacao(sentinel->root, &listaTemp, "ativo");
+    ordenarSituacao(sentinel->root, &listaTemp, "concluido");
+    
+    printf("\n--- Exibindo todas as tarefa ---\n");
+    exibirLista(&listaTemp);
+    printf("\n");
+
+    destruirLista(&listaTemp);
+}
+
 int main(void){
     Tree sentinel;
     iniciarArvore(&sentinel);
@@ -84,6 +98,9 @@ int main(void){
             case 2:
                 apagarTarefa(&sentinel);
                 break;
+            case 3:
+                listarTodos(&sentinel);
+                
             case 7:
                 break;
             default:
