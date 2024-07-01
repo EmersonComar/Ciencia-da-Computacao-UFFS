@@ -226,19 +226,6 @@ void exibirLista(ListaOrdenada *lista){
     }
 }
 
-void ordenarTarefasAtivasTempo(Node *root, ListaOrdenada *lista){
-    if(root == NULL) return;
-    
-    
-    ordenarTarefasAtivasTempo(root->left, lista);
-    ordenarTarefasAtivasTempo(root->right, lista);
-
-    if(strcmp(root->tarefa->situacao, "ativo") == 0){
-        ListaOrdenada *novo = criarLista(root->tarefa);
-        popularLista(lista, novo);
-    }
-
-}
 
 void destruirLista(ListaOrdenada *lista){
     ListaOrdenada *aux = lista->next;
@@ -247,5 +234,17 @@ void destruirLista(ListaOrdenada *lista){
         ListaOrdenada *atual = aux;
         aux = aux->next;
         free(atual);
+    }
+}
+
+void ordenarSituacao(Node *root, ListaOrdenada *lista, char *situacao){
+    if(root == NULL) return;
+
+    ordenarSituacao(root->left, lista, situacao);
+    ordenarSituacao(root->right, lista, situacao);
+
+    if(strcmp(root->tarefa->situacao, situacao) == 0){
+        ListaOrdenada *novo = criarLista(root->tarefa);
+        popularLista(lista, novo);
     }
 }
