@@ -3,12 +3,16 @@
 #include <string.h>
 
 void limpezaBuffer();
+void retornarMenu();
 void limparTela();
 int menu();
 void cadastrarTarefa(Tree *sentinel);
 void apagarTarefa(Tree *sentinel);
 void listarTodos(Tree *sentinel);
 void concluirTarefa(Tree *sentinel);
+void listarAtivas(Tree *sentinel);
+void listarConcluidas(Tree *sentinel);
+void listarInOrdem(Tree *sentinel);
 
 int main(void){
     Tree sentinel;
@@ -27,18 +31,28 @@ int main(void){
                 apagarTarefa(&sentinel);
                 break;
             case 3:
-                listarTodos(&sentinel);
-                break;
-            case 6:
                 concluirTarefa(&sentinel);
                 break;
+            case 4:
+                listarTodos(&sentinel);
+                break;
+            case 5:
+                listarAtivas(&sentinel);
+                break;
+            case 6:
+                listarConcluidas(&sentinel);
+                break;
             case 7:
+                listarInOrdem(&sentinel);
+                break;
+            case 8:
                 break;
             default:
                 printf("\nEscolha uma opção entre 1 e 6\n");
+                retornarMenu();
         }
 
-    }while (opt != 7);
+    }while (opt != 8);
 
 
 
@@ -47,6 +61,48 @@ int main(void){
 }
 
 void limparTela(){
+    printf("\033[2J\033[1;1H");
+}
+
+void listarInOrdem(Tree *sentinel){
+    limparTela();
+    printf("\n--- Exibindo as tarefas em ordem ID ---\n");
+    inOrdem(sentinel->root);
+    retornarMenu();
+}
+
+void listarConcluidas(Tree *sentinel){
+    limparTela();
+    ListaOrdenada listaConcluido;
+
+    iniciarLista(&listaConcluido);
+
+    ordenarSituacao(sentinel->root, &listaConcluido, "concluido");
+    
+    printf("\n--- Exibindo as tarefas concluidas ---\n");
+    exibirLista(&listaConcluido);
+
+    retornarMenu();
+    destruirLista(&listaConcluido);
+}
+
+void listarAtivas(Tree *sentinel){
+    limparTela();
+    ListaOrdenada listaAtivo;
+
+    iniciarLista(&listaAtivo);
+
+    ordenarSituacao(sentinel->root, &listaAtivo, "ativo");
+    
+    printf("\n--- Exibindo as tarefas ativas ---\n");
+    exibirLista(&listaAtivo);
+
+    retornarMenu();
+
+    destruirLista(&listaAtivo);
+}
+
+void retornarMenu(){
     printf("\n--Aperte [enter] para retornar--\n");
     getchar();
     limpezaBuffer();
@@ -65,17 +121,22 @@ int menu(){
     printf("=============\n");
     printf("1 - Adicionar tarefa\n");
     printf("2 - Remover tarefa\n");
-    printf("3 - Visualizar todas as tarefas\n");
-    printf("4 - Visualizar tarefas ativas\n");
-    printf("5 - Visualizar tarefas concluídas\n");
-    printf("6 - Concluir tarefa\n");
-    printf("7 - Sair\n");
+    printf("3 - Concluir tarefa\n");
+    printf("------\n");
+    printf("4 - Visualizar todas as tarefas\n");
+    printf("5 - Visualizar tarefas ativas\n");
+    printf("6 - Visualizar tarefas concluídas\n");
+    printf("7 - Visualizar tarefas em ordem ID\n");
+    printf("------\n");
+    printf("8 - Sair\n");
     printf("-> ");
     scanf("%d", &opt);
     return opt;
 }
 
 void cadastrarTarefa(Tree *sentinel){
+    limparTela();
+
     int id;
     char descricao[21];
     float tempoLimite;
@@ -105,10 +166,11 @@ void cadastrarTarefa(Tree *sentinel){
     printf("\nA tarefa a seguir foi cadastrada:\n");
     exibirTarefa(retornarNodeTarefa(sentinel->root, id)->tarefa);
 
-    limparTela();
+    retornarMenu();
 }
 
 void apagarTarefa(Tree *sentinel){
+    limparTela();
     int id;
 
     printf("\n--- Removendo tarefa ---\n");
@@ -123,10 +185,12 @@ void apagarTarefa(Tree *sentinel){
             printf("\nTarefa não cadastrada");
     }
 
-    limparTela();
+    retornarMenu();
 }
 
 void listarTodos(Tree *sentinel){
+    limparTela();
+    
     ListaOrdenada listaAtivo;
     ListaOrdenada listaConcluido;
 
@@ -140,8 +204,8 @@ void listarTodos(Tree *sentinel){
     exibirLista(&listaAtivo);
     exibirLista(&listaConcluido);
 
-    limparTela();
-    
+    retornarMenu();
+
     destruirLista(&listaAtivo);
     destruirLista(&listaConcluido);
 
@@ -163,6 +227,6 @@ void concluirTarefa(Tree *sentinel){
             printf("\nTarefa não cadastrada");
     }
 
-    limparTela();
+    retornarMenu();
 }
 
