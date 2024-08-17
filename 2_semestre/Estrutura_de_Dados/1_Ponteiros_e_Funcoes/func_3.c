@@ -30,6 +30,6 @@ int maiorDeTres(int a, int b, int c){
 	int maior = maiorDeDois(a, b);
 
 	if (maior > c)
-		return maiorDeDois(a, b);
+		return maior;
 	return c;
 }
