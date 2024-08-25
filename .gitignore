@@ -1,6 +1,9 @@
 #diretório bin
 bin/
 
+#diretório obj
+obj/
+
 #direório vscode
 .vscode/
 
