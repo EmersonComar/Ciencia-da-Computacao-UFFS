@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>algoritmica</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A,B</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.std_logic_1164.all;
+
+entity algoritmica is
+	port(
+		A: in STD_LOGIC;
+		B: in STD_LOGIC;
+		S: out STD_LOGIC
+	);
+end algoritmica;
+
+architecture comport_algor of algoritmica is
+begin
+	process(A,B)
+	begin
+		if(B &lt; A) then
+			S &lt;= &apos;1&apos;;
+		else
+			s &lt;= &apos;0&apos;;
+		end if;
+	end process;
+end comport_algor;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>S</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="120" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="120" y="260"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="380" y="240"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>hw</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A,B</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.std_logic_1164.all;
+
+entity hw is
+        port(
+            A: in STD_LOGIC;
+            B: in STD_LOGIC;
+            S: out STD_LOGIC
+        );
+end hw;
+
+architecture comportamento of hw is
+begin
+
+	s &lt;= A and B;
+
+end comportamento;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>S</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="120" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="120" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="360" y="380"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>fluxo</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A,B</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.STD_LOGIC_1164.all;
+
+entity fluxo is
+	port (
+		A: in STD_LOGIC;
+		B: in STD_LOGIC;
+		S: out STD_LOGIC
+	);
+end fluxo;
+
+architecture comport_fluxo of fluxo is
+begin
+	s &lt;= &apos;1&apos; when B &lt; A
+		else &apos;0&apos;;
+end comport_fluxo;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>S</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="500"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="120" y="500"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="120" y="540"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="360" y="520"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="280" y="240"/>
+      <p2 x="380" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="400"/>
+      <p2 x="220" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="260"/>
+      <p2 x="220" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="500"/>
+      <p2 x="220" y="500"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="360"/>
+      <p2 x="220" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="520"/>
+      <p2 x="360" y="520"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="220"/>
+      <p2 x="220" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="380"/>
+      <p2 x="360" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="120" y="540"/>
+      <p2 x="220" y="540"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>

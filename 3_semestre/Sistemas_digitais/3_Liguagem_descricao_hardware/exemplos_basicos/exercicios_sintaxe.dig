@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>port_or</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A,B,C,D</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.STD_LOGIC_1164.all;
+
+entity port_or is
+	port (
+		A: in STD_LOGIC;
+		B: in STD_LOGIC;
+		C: in STD_LOGIC;
+		D: in STD_LOGIC;
+		S: out STD_LOGIC
+	);
+end port_or;
+
+architecture behavior of port_or is
+begin
+
+	S &lt;= A or B or C or D;
+	
+end behavior;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>S</string>
+        </entry>
+      </elementAttributes>
+      <pos x="260" y="120"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="100"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="140"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="180"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="380" y="160"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>array_or</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>E:4</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.STD_LOGIC_1164.all;
+
+entity array_or is
+	port (
+		E: in STD_LOGIC_VECTOR (3 DOWNTO 0);
+		S: out STD_LOGIC
+	);
+end array_or;
+
+architecture behavior of array_or is
+begin
+
+	S &lt;= E(0) or E(1) or E(2) or E(3);
+
+end behavior;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>S</string>
+        </entry>
+      </elementAttributes>
+      <pos x="260" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+      </elementAttributes>
+      <pos x="160" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="380" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>ext3a</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A,B,C</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.STD_LOGIC_1164.all;
+
+entity ext3a is
+	port (
+		A: in STD_LOGIC;
+		B: in STD_LOGIC;
+		C: in STD_LOGIC;
+		
+		D: out STD_LOGIC;
+		E: out STD_LOGIC;
+		F: out STD_LOGIC
+	);
+end ext3a;
+
+architecture behavioral of ext3a is
+signal nor_AnB, nand_nBnC, and_nBnC:  STD_LOGIC;
+begin
+	
+	nor_AnB &lt;= A nor not B;
+	nand_nBnC &lt;= not B nand not C;
+	and_nBnC &lt;= not B and not C;
+	
+	D &lt;= nor_Anb xor not nand_nBnC;
+	E &lt;= nand_nBnC and not B;
+	F &lt;= nand_nBnC xor and_nBnC;
+
+end behavioral;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>D,E,F</string>
+        </entry>
+      </elementAttributes>
+      <pos x="260" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="420"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="160" y="480"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="380" y="380"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="380" y="460"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes/>
+      <pos x="380" y="420"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="320" y="160"/>
+      <p2 x="380" y="160"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="480"/>
+      <p2 x="200" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="100"/>
+      <p2 x="180" y="100"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="420"/>
+      <p2 x="260" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="420"/>
+      <p2 x="380" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="200"/>
+      <p2 x="260" y="200"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="360"/>
+      <p2 x="200" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="300"/>
+      <p2 x="260" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="300"/>
+      <p2 x="380" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="140"/>
+      <p2 x="260" y="140"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="460"/>
+      <p2 x="380" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="200" y="400"/>
+      <p2 x="260" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="400"/>
+      <p2 x="360" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="180"/>
+      <p2 x="260" y="180"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="120"/>
+      <p2 x="260" y="120"/>
+    </wire>
+    <wire>
+      <p1 x="200" y="440"/>
+      <p2 x="260" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="320" y="440"/>
+      <p2 x="360" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="160" y="220"/>
+      <p2 x="180" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="380"/>
+      <p2 x="380" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="100"/>
+      <p2 x="180" y="120"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="200"/>
+      <p2 x="180" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="200" y="360"/>
+      <p2 x="200" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="200" y="440"/>
+      <p2 x="200" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="380"/>
+      <p2 x="360" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="440"/>
+      <p2 x="360" y="460"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
