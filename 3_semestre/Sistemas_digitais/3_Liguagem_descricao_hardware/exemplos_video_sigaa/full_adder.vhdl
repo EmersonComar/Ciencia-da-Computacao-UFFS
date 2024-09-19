@@ -44,6 +44,9 @@ begin
 	
 end behavior_full;
 
+library ieee;
+use ieee.std_logic_1164.all;
+
 --------------------------
 -- Entity half_adder
 --------------------------
