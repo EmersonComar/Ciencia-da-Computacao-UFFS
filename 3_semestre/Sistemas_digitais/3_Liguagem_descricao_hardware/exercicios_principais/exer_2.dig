@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>decoder_2to4en</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>EN,A:2</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.std_logic_1164.all;
+
+entity decoder_2to4en is
+	port (
+		EN : in std_logic; -- Enable
+		A : in std_logic_vector (1 downto 0); -- Decoder Input
+		Y_L : out std_logic_vector (3 downto 0) -- Decoder Output (active low)
+	);
+end entity decoder_2to4en;
+
+architecture behavior of decoder_2to4en is
+begin
+	process(EN, A)
+	begin	
+		if EN = &apos;0&apos; then
+			Y_L &lt;= &quot;1111&quot;;
+		else
+			case A is
+				when &quot;00&quot; =&gt; Y_L &lt;= &quot;0001&quot;;
+				when &quot;01&quot; =&gt; Y_L &lt;= &quot;0010&quot;;
+				when &quot;10&quot; =&gt; Y_L &lt;= &quot;0100&quot;;
+				when &quot;11&quot; =&gt; Y_L &lt;= &quot;1000&quot;;
+				when others =&gt; NULL;
+			end case;
+		end if;
+	end process;
+end behavior;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>Y_L:4</string>
+        </entry>
+      </elementAttributes>
+      <pos x="480" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>A</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>2</int>
+        </entry>
+      </elementAttributes>
+      <pos x="360" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>EN</string>
+        </entry>
+      </elementAttributes>
+      <pos x="360" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Y_L</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+      </elementAttributes>
+      <pos x="640" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Testcase</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Teste Exercicio 2</string>
+        </entry>
+        <entry>
+          <string>Testdata</string>
+          <testData>
+            <dataString>A EN Y_L
+0 0 0xf
+1 0 0xf
+2 0 0xf
+3 0 0xf
+0 1 1
+1 1 2
+2 1 4
+3 1 8
+
+</dataString>
+          </testData>
+        </entry>
+      </elementAttributes>
+      <pos x="440" y="200"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="360" y="320"/>
+      <p2 x="480" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="540" y="340"/>
+      <p2 x="640" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="360" y="360"/>
+      <p2 x="480" y="360"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
