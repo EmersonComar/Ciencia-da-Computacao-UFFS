@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>decoder_3to8</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A:3</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.std_logic_1164.all;
+
+entity decoder_3to8 is
+	port (
+		A : in std_logic_vector (2 downto 0); -- Decoder Input
+		Y : out std_logic_vector (7 downto 0) -- Decoder Output
+	);
+end entity decoder_3to8;
+
+architecture behavior of decoder_3to8 is
+begin
+	process(A)
+	begin
+		case A is
+			when &quot;000&quot; =&gt; Y &lt;= &quot;00000001&quot;;
+			when &quot;001&quot; =&gt; Y &lt;= &quot;00000010&quot;;
+			when &quot;010&quot; =&gt; Y &lt;= &quot;00000100&quot;;
+			when &quot;011&quot; =&gt; Y &lt;= &quot;00001000&quot;;
+			when &quot;100&quot; =&gt; Y &lt;= &quot;00010000&quot;;
+			when &quot;101&quot; =&gt; Y &lt;= &quot;00100000&quot;;
+			when &quot;110&quot; =&gt; Y &lt;= &quot;01000000&quot;;
+			when &quot;111&quot; =&gt; Y &lt;= &quot;10000000&quot;;
+			when others =&gt; NULL;
+		end case;
+	end process;
+end behavior;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>Y:8</string>
+        </entry>
+      </elementAttributes>
+      <pos x="440" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>ENTRADA</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>3</int>
+        </entry>
+      </elementAttributes>
+      <pos x="360" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>SAIDA</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>8</int>
+        </entry>
+      </elementAttributes>
+      <pos x="580" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Testcase</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Teste para o exercicio 1</string>
+        </entry>
+        <entry>
+          <string>Testdata</string>
+          <testData>
+            <dataString>ENTRADA SAIDA
+0 1
+1 2
+2 4
+3 8
+4 0x10
+5 0x20
+6 0x40
+7 0x80</dataString>
+          </testData>
+        </entry>
+      </elementAttributes>
+      <pos x="420" y="160"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="360" y="280"/>
+      <p2 x="440" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="280"/>
+      <p2 x="580" y="280"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
