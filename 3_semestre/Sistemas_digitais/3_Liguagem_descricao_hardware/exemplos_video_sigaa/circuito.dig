@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>half_adder</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>A,B</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.STD_LOGIC_1164.all;
+
+entity half_adder is
+	port (
+		A: in STD_LOGIC;
+		B: in STD_LOGIC;
+		SUM: out STD_LOGIC;
+		CARRY: out STD_LOGIC
+	);
+end half_adder;
+
+
+architecture behavior_algoritmica of half_adder is
+begin
+	process(A, B)
+	begin
+		if(A = &apos;1&apos; and B = &apos;1&apos;) then
+			SUM &lt;= &apos;0&apos;;
+			CARRY &lt;= &apos;1&apos;;
+		elsif ( A &gt; B or B &gt; A ) then
+			SUM &lt;= &apos;1&apos;;
+			CARRY &lt;= &apos;0&apos;;
+		else
+			SUM &lt;= &apos;0&apos;;
+			CARRY &lt;= &apos;0&apos;;
+		end if;
+	end process;
+
+end behavior_algoritmica;
+
+
+--------------------------
+-- Abstração de fluxo
+--------------------------
+-- architecture behavior_fluxo of half_adder is
+-- begin
+
+--	SUM &lt;= A xor B;
+--	CARRY &lt;= A and B;
+
+-- end behavior_fluxo;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>SUM,CARRY</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>5</int>
+        </entry>
+      </elementAttributes>
+      <pos x="320" y="220"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>A</string>
+        </entry>
+      </elementAttributes>
+      <pos x="260" y="200"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>B</string>
+        </entry>
+      </elementAttributes>
+      <pos x="260" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>SUM</string>
+        </entry>
+      </elementAttributes>
+      <pos x="480" y="180"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Out</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>CARRY</string>
+        </entry>
+      </elementAttributes>
+      <pos x="480" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Testcase</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Teste para o half_adder</string>
+        </entry>
+        <entry>
+          <string>Testdata</string>
+          <testData>
+            <dataString>A B SUM CARRY
+0 0 0 0
+1 0 1 0
+0 1 1 0
+1 1 0 1</dataString>
+          </testData>
+        </entry>
+      </elementAttributes>
+      <pos x="320" y="100"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>full_adder</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>a_f,b_f,carry_in</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY full_adder IS
+    PORT (
+       a_f,b_f: in STD_LOGIC;
+       carry_in: in STD_LOGIC;
+       carry_out, sum: out STD_LOGIC
+    );
+END ENTITY full_adder;
+
+ARCHITECTURE behav_estrutural OF full_adder IS
+    component half_adder IS
+    PORT (
+        a,b: in STD_LOGIC;
+        carry, sum: out STD_LOGIC
+    );
+    END component;
+
+    signal carry1, carry2, sum_int: STD_LOGIC;
+
+BEGIN
+   
+    ha1: half_adder
+     port map(
+        a =&gt; a_f,
+        b =&gt; b_f,
+        carry =&gt; carry1,
+        sum =&gt; sum_int
+    );
+
+    ha2: half_adder
+    port map(
+       a =&gt; sum_int,
+       b =&gt; carry_in,
+       carry =&gt; carry2,
+       sum =&gt; sum
+   );
+
+   carry_out &lt;= carry1 OR carry2;
+
+END behav_estrutural;
+
+----------------------------------------
+--ENTITY half_adder
+-----------------------------------------
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+
+ENTITY half_adder IS
+    PORT (
+       a,b: in STD_LOGIC;
+       carry, sum: out STD_LOGIC
+    );
+END ENTITY half_adder;
+
+ARCHITECTURE behav_FLUXO OF half_adder IS
+BEGIN
+   carry &lt;= a AND b;
+   sum &lt;= a XOR b;
+END behav_FLUXO;
+
+
+
+-- ARCHITECTURE behav_algo OF half_adder IS
+-- BEGIN
+--     process (a,b)
+--     begin
+--         if ( a = &apos;1&apos; and b = &apos;1&apos;) then 
+--             sum &lt;= &apos;0&apos;;
+--             carry &lt;= &apos;1&apos;;
+--         elsif (a &gt; b or b &gt; a) then
+--             sum &lt;= &apos;1&apos;; 
+--             carry &lt;= &apos;0&apos;;
+--         else
+--             sum &lt;= &apos;0&apos;; 
+--             carry &lt;= &apos;0&apos;;
+--         end if;
+--     end process; 
+-- END behav_algo;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>carry_out,sum</string>
+        </entry>
+      </elementAttributes>
+      <pos x="340" y="400"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="280" y="240"/>
+      <p2 x="320" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="240"/>
+      <p2 x="460" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="180"/>
+      <p2 x="480" y="180"/>
+    </wire>
+    <wire>
+      <p1 x="260" y="200"/>
+      <p2 x="280" y="200"/>
+    </wire>
+    <wire>
+      <p1 x="260" y="280"/>
+      <p2 x="280" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="280"/>
+      <p2 x="480" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="220"/>
+      <p2 x="320" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="220"/>
+      <p2 x="460" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="200"/>
+      <p2 x="280" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="240"/>
+      <p2 x="280" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="180"/>
+      <p2 x="460" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="240"/>
+      <p2 x="460" y="280"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
