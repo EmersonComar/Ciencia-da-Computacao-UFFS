@@ -9,7 +9,7 @@ void troca(int *a, int *b);
 
 int main(void){
 
-    int vetor[] = {3, 5, 2, 4, 6, 8, 9, 10, 7};
+    int vetor[] = {7, 5, 3, 2, 1, 15};
     int n = sizeof(vetor)/sizeof(vetor[0]);
 
     printf("Vetor não ordenado:\n");
@@ -31,7 +31,7 @@ void exibeVetor(int *vetor, int n){
 
 void quicksort(int *vetor, int inicio, int fim){
     if (inicio < fim){
-        int pivo = particao(vetor, inicio, fim-1);
+        int pivo = particao(vetor, inicio, fim);
         quicksort(vetor, 0, pivo-1);
         quicksort(vetor, pivo+1, fim);
     }
@@ -39,18 +39,18 @@ void quicksort(int *vetor, int inicio, int fim){
 
 int particao(int *vetor, int inicio, int fim){
     int pivo = vetor[fim];
-    int k = inicio;
+    int k = inicio - 1;
 
     for(int i = inicio; i<fim; i++){
         if(vetor[i] <= pivo){
-            troca(&vetor[k], &vetor[i]);
             k++;
+            troca(&vetor[k], &vetor[i]);
         }
     }
    // if(vetor[k] > vetor[fim])
-        troca(&vetor[k], &vetor[fim]);
+        troca(&vetor[k + 1], &vetor[fim]);
 
-    return k;
+    return k + 1;
 }
 
 void troca(int *a, int *b){
