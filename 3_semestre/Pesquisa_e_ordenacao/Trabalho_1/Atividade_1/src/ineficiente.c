@@ -12,7 +12,8 @@ struct tqueue {
     struct tqueue *next;
 };
 
-//funções privadas
+// ========= funções privadas
+
 Tlist *node_lista(int valor){
     Tlist *node = (Tlist*)malloc(sizeof(Tlist));
 
@@ -29,10 +30,16 @@ Tlist *node_lista(int valor){
     return node;
 }
 
+void troca(int *a, int *b){
+    int aux = *a;
+    *a = *b;
+    *b = aux;
+}
+// =========================
 
 
-// funções públicas
-Tlist *gerador_lista(int *vetor, int tamanho_vetor){
+// ======== funções públicas
+Tlist *gerar_lista(int *vetor, int tamanho_vetor){
     
     Tlist *head = NULL;
     Tlist *aux = NULL;
@@ -52,7 +59,75 @@ Tlist *gerador_lista(int *vetor, int tamanho_vetor){
     return head;
 }
 
-void liberar_memoria(Tlist *head){
+/*
+ * Primeiramente irá precorrer a lista encadeada calculando a quantidade de nodes. Depois, irá 
+ * alocar o espaço de memória corretamente. E, por fim, percorrer novamente a lista encadeada 
+ * adicionando os valores ao vetor
+*/
+int *gerar_vetor(Tlist *head){
+    int tamanho_vetor = 0;
+    int *vetor = NULL;
+
+    for(Tlist *aux = head; aux != NULL; aux = aux->next){
+        tamanho_vetor++;
+    }
+
+    vetor = (int *)malloc(tamanho_vetor * sizeof(int));
+
+    if(vetor == NULL){
+        fprintf(stderr, "Erro ao gerar vetor\n");
+        exit(1);
+    }
+
+    int i=0;
+    for(Tlist *aux = head; aux != NULL; aux = aux->next){
+        vetor[i] = aux->valor;
+        i++;
+    }
+
+    return vetor;
+}
+
+void exibir_vetor(int *vetor, int n){
+    printf("{");
+    for(int i=0; i<n-1; i++){
+        printf("%d, ", vetor[i]);
+    }
+    printf("%d}\n", vetor[n-1]);
+}
+
+void exibir_lista(Tlist *head){
+    if(head == NULL){
+        printf("Lista vazia!\n");
+        return;
+    }
+
+    Tlist *aux;    
+    for(aux = head; aux->next != NULL; aux = aux->next){
+        printf("%d -> ", aux->valor);
+    }
+
+    printf("%d\n", aux->valor);
+}
+
+
+void selectionsort(int *vetor, int tamanho_vetor){
+
+    for(int i=0; i<tamanho_vetor - 1; i++){
+
+        int menor = i;
+
+        for(int j = i+1; j<tamanho_vetor; j++){
+            if(vetor[menor] > vetor[j]){
+                menor = j;
+            }
+        }
+        troca(&vetor[menor], &vetor[i]);
+    }
+}
+
+
+void liberar_memoria_lista(Tlist *head){
     Tlist *aux = head;
 
     while (aux != NULL){
@@ -61,4 +136,8 @@ void liberar_memoria(Tlist *head){
 
         aux = prox;
     }
+}
+
+void liberar_memoria_vetor(int *vetor){
+    free(vetor);
 }
