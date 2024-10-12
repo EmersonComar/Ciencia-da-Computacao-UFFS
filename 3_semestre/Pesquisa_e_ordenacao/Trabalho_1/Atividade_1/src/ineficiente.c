@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+// ============== Declaração das structs ============
 struct tlist {
     int valor;
     struct tlist *next;
@@ -11,14 +13,13 @@ struct tqueue {
     int valor;
     struct tqueue *next;
 };
+//=========================
 
-// ========= funções privadas
+// ============== funções privadas ===================
 
 Tlist *node_lista(int valor){
     Tlist *node = (Tlist*)malloc(sizeof(Tlist));
 
-    // Caso ocorrer um erro na alocação dinâmica, o programa será encerrado
-    // gerando uma mensagem na saída de erro padrão.
     if(node == NULL){
         fprintf(stderr, "Erro ao alocar memória para lista\n");
         exit(1);
@@ -35,10 +36,27 @@ void troca(int *a, int *b){
     *a = *b;
     *b = aux;
 }
-// =========================
+
+Tqueue *node_fila(int valor){
+    Tqueue *node = (Tqueue *)malloc(sizeof(Tqueue));
+
+    if(node == NULL){
+        fprintf(stderr, "Erro ao alocar memória para fila!\n");
+        exit(1);
+    }
+
+    node->valor = valor;
+    node->next = NULL;
+
+    return node;
+}
+// ====================================================
 
 
-// ======== funções públicas
+// ============== funções públicas ====================
+
+// Funções de geração
+
 Tlist *gerar_lista(int *vetor, int tamanho_vetor){
     
     Tlist *head = NULL;
@@ -88,6 +106,30 @@ int *gerar_vetor(Tlist *head){
     return vetor;
 }
 
+/*
+ * Será necessário utilizar ponteiros para ponteiros para que a alteração se 
+ * aplique nas variáveis originais. 
+*/
+
+void gerar_fila(Tqueue **head, Tqueue **tail, int *vetor, int tamanho_vetor){
+
+    for(int i=0; i<tamanho_vetor; i++){
+
+        Tqueue *node = node_fila(vetor[i]);
+        if(*head == NULL){
+            *head = node;
+            *tail = node;
+        } else {
+            (*tail)->next = node;
+            *tail = node;
+        }
+    }
+}
+// ================================
+
+
+// Funções de exibição
+
 void exibir_vetor(int *vetor, int n){
     printf("{");
     for(int i=0; i<n-1; i++){
@@ -110,7 +152,21 @@ void exibir_lista(Tlist *head){
     printf("%d\n", aux->valor);
 }
 
+void exibir_fila(Tqueue *head){
+    if(head == NULL){
+        printf("Fila vazia!\n");
+        return;
+    }
 
+    Tqueue *aux;
+    for(aux = head; aux->next != NULL; aux = aux->next){
+        printf("%d < ", aux->valor);
+    }
+    printf("%d\n", aux->valor);
+}
+// =======================================
+
+// Algoritmo de ordenação
 void selectionsort(int *vetor, int tamanho_vetor){
 
     for(int i=0; i<tamanho_vetor - 1; i++){
@@ -125,15 +181,15 @@ void selectionsort(int *vetor, int tamanho_vetor){
         troca(&vetor[menor], &vetor[i]);
     }
 }
+// ==================================
 
-
+// Limpezas de memória
 void liberar_memoria_lista(Tlist *head){
     Tlist *aux = head;
 
     while (aux != NULL){
         Tlist *prox = aux->next;
         free(aux);
-
         aux = prox;
     }
 }
@@ -141,3 +197,13 @@ void liberar_memoria_lista(Tlist *head){
 void liberar_memoria_vetor(int *vetor){
     free(vetor);
 }
+
+void liberar_memoria_fila(Tqueue *head){
+    Tqueue *aux = head;
+    while(aux != NULL){
+        Tqueue *prox = aux->next;
+        free(aux);
+        aux = prox;
+    }
+}
+// ==================================
