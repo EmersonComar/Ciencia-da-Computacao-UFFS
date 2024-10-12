@@ -5,17 +5,15 @@ INCLUDE = ./include
 OBJ = ./obj
 SRC = ./src
 
-VAL = $(shell command -v valgrind)
-
-# Ao rodar o comando `make`, esta target será chamada
+# Ao rodar o comando make, esta target será chamada
 all: lib myapp
 
-# Responsável em compilar o(s) arquivo(s) objeto(s)
+# Responsável em compilar o arquivo objeto
 lib:
 	@echo "Compilando arquivo objeto"
 	gcc -c $(SRC)/ineficiente.c -I $(INCLUDE) -o $(OBJ)/ineficiente.o
 
-# Irá compilar o main linkando com o(s) arquivo(s) objeto(s)
+# Irá compilar o main linkando com o arquivo objeto
 myapp:
 	@echo -e "\nCompilando main"
 	gcc $(APP)/main.c $(OBJ)/* -I $(INCLUDE) -o $(BIN)/main
@@ -28,3 +26,8 @@ run: $(BIN)/main
 clear: $(BIN)/main $(OBJ)/ineficiente.o
 	@echo "Apagando os arquivos main e ineficiente.o"
 	rm $(BIN)/main $(OBJ)/ineficiente.o
+
+# Analisar liberação de memória. Necessário instalar pacote valgrind
+valgrind: $(BIN)/main
+	@echo "Executando analise de memória"
+	valgrind $(BIN)/main

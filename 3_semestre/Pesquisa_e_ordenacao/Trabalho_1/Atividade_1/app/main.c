@@ -4,10 +4,13 @@
 int main(void){
     
     // irá criar e calcular o tamanho do vetor
-    int vetor[] = {0, 10, 5, 2, 9, 3, 1, 7, 8, 6, 11, 0, -1};
+    int vetor[] = {0, 0, -1, -2, 5};
     int tamanho_vetor = sizeof(vetor)/sizeof(vetor[0]);
     
     Tlist *head_lista = NULL;
+
+    Tqueue *head_fila = NULL;
+    Tqueue *tail_fila = NULL;
 
     printf("Vetor inicial: ");
     exibir_vetor(vetor, tamanho_vetor);
@@ -25,8 +28,12 @@ int main(void){
     printf("Vetor temporário ordenado usando SelectionSort: ");
     exibir_vetor(vet_temp, tamanho_vetor);
 
+    gerar_fila(&head_fila, &tail_fila, vet_temp, tamanho_vetor);
+    printf("\nFila ordenada gerada a partir de vetor temporário:\n");
+    exibir_fila(head_fila);
 
     liberar_memoria_lista(head_lista);
     liberar_memoria_vetor(vet_temp);
+    liberar_memoria_fila(head_fila);
     return 0;
 }
