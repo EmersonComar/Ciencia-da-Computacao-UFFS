@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>PortaGaragem</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>clk,reset,B,S</string>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.numeric_std.all;
+
+
+entity PortaGaragem is
+    Port (
+        clk : in std_logic;        -- clock
+        reset : in std_logic;      -- reset
+        B : in std_logic;          -- controle remoto
+        S : in std_logic;          -- sensor de segurança
+        SA : out std_logic;        -- indicador de porta aberta
+        SF : out std_logic;        -- indicador de porta fechada
+        A : out std_logic;         -- sinal abrir porta
+        F : out std_logic          -- sinal fechar porta
+    );
+end PortaGaragem;
+
+architecture behavior_PortaGaragem of PortaGaragem is
+    type Tipo_estado is (ABERTO, FECHADO, FECHANDO1, FECHANDO2, FECHANDO3, ABRINDO1, ABRINDO2, ABRINDO3);
+    signal atual, prox : Tipo_estado := FECHADO; -- inicializa um estado
+begin
+    -- Processo síncrono para controlar as mudanças de estado na borda de subida do clock
+    process (clk, reset)
+    begin
+        if reset = &apos;1&apos; then
+            atual &lt;= FECHADO; -- Resetar para estado inicial
+        elsif rising_edge(clk) then
+            atual &lt;= prox; -- Atualiza o estado na borda de subida do clock
+        end if;
+    end process;
+
+    -- Processo combinacional para definir as transições de estado
+    process (atual, B, S)
+    begin
+        -- Atualiza as saídas SA e SF conforme o estado da porta
+        SA &lt;= &apos;0&apos;;
+        SF &lt;= &apos;0&apos;;
+        
+        case atual is
+            when FECHADO =&gt;
+                A &lt;= &apos;0&apos;;
+                F &lt;= &apos;0&apos;;
+                SF &lt;= &apos;1&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if B = &apos;1&apos; then
+                    prox &lt;= ABRINDO1;
+                end if;
+            when FECHANDO1 =&gt;
+                A &lt;= &apos;0&apos;;
+                F &lt;= &apos;1&apos;;
+                SF &lt;= &apos;0&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if S = &apos;1&apos; then
+                    prox &lt;= ABRINDO3;
+                else
+                    prox &lt;= FECHANDO2;
+                end if;
+            when FECHANDO2 =&gt;
+                A &lt;= &apos;0&apos;;
+                F &lt;= &apos;1&apos;;
+                SF &lt;= &apos;0&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if S = &apos;1&apos; then
+                    prox &lt;= ABRINDO2;
+                else
+                    prox &lt;= FECHANDO3;
+                end if;
+            when FECHANDO3 =&gt;
+                A &lt;= &apos;0&apos;;
+                F &lt;= &apos;1&apos;;
+                SF &lt;= &apos;0&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if S = &apos;1&apos; then
+                    prox &lt;= ABRINDO1;
+                else
+                    prox &lt;= FECHADO;
+                end if;
+            when ABRINDO1 =&gt;
+                A &lt;= &apos;1&apos;;
+                F &lt;= &apos;0&apos;;
+                SF &lt;= &apos;0&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if S = &apos;1&apos; then
+                    prox &lt;= FECHANDO3;
+                else
+                    prox &lt;= ABRINDO2;
+                end if;
+            when ABRINDO2 =&gt;
+                A &lt;= &apos;1&apos;;
+                F &lt;= &apos;0&apos;;
+                SF &lt;= &apos;0&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if S = &apos;1&apos; then
+                    prox &lt;= FECHANDO2;
+                else
+                    prox &lt;= ABRINDO3;
+                end if;
+            when ABRINDO3 =&gt;
+                A &lt;= &apos;1&apos;;
+                F &lt;= &apos;0&apos;;
+                SF &lt;= &apos;0&apos;; -- Porta está fechada
+                SA &lt;= &apos;0&apos;;
+                if S = &apos;1&apos; then
+                    prox &lt;= FECHANDO3;
+                else
+                    prox &lt;= ABERTO;
+                end if;
+            when ABERTO =&gt;
+                A &lt;= &apos;0&apos;;
+                F &lt;= &apos;0&apos;;
+                SA &lt;= &apos;1&apos;; -- Porta está aberta
+                SF &lt;= &apos;0&apos;;
+                if B = &apos;1&apos; then
+                    prox &lt;= FECHANDO1;
+                end if;
+        end case;
+    end process;
+end behavior_PortaGaragem;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>SA,SF,A,F</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>8</int>
+        </entry>
+      </elementAttributes>
+      <pos x="360" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>clk</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>reset</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>B</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>S</string>
+        </entry>
+      </elementAttributes>
+      <pos x="220" y="400"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes/>
+      <pos x="640" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes/>
+      <pos x="640" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Color</string>
+          <awt-color>
+            <red>0</red>
+            <green>255</green>
+            <blue>255</blue>
+            <alpha>255</alpha>
+          </awt-color>
+        </entry>
+      </elementAttributes>
+      <pos x="640" y="360"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Color</string>
+          <awt-color>
+            <red>0</red>
+            <green>255</green>
+            <blue>255</blue>
+            <alpha>255</alpha>
+          </awt-color>
+        </entry>
+      </elementAttributes>
+      <pos x="640" y="400"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="220" y="320"/>
+      <p2 x="360" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="320"/>
+      <p2 x="640" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="220" y="400"/>
+      <p2 x="280" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="400"/>
+      <p2 x="640" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="260" y="340"/>
+      <p2 x="360" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="340"/>
+      <p2 x="600" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="220" y="280"/>
+      <p2 x="260" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="280"/>
+      <p2 x="640" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="220" y="360"/>
+      <p2 x="260" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="360"/>
+      <p2 x="360" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="360"/>
+      <p2 x="640" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="360"/>
+      <p2 x="580" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="260" y="300"/>
+      <p2 x="360" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="300"/>
+      <p2 x="580" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="260" y="280"/>
+      <p2 x="260" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="260" y="340"/>
+      <p2 x="260" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="280"/>
+      <p2 x="580" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="580" y="360"/>
+      <p2 x="580" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="280" y="360"/>
+      <p2 x="280" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="340"/>
+      <p2 x="600" y="360"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
