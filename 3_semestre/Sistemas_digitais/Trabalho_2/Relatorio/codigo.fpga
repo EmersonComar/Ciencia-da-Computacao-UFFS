@@ -1,0 +1,124 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.numeric_std.all;
+
+
+entity PortaGaragem is
+    Port (
+        --clk : in std_logic;        -- clock KEY0
+        --reset : in std_logic;      -- reset KEY1
+        -- B : in std_logic;          -- controle remoto KEY2
+        -- S : in std_logic;          -- sensor de segurança KEY3
+        -- SA : out std_logic;        -- indicador de porta aberta LEDR0
+        -- SF : out std_logic;        -- indicador de porta fechada LEDR1
+        -- A : out std_logic;         -- sinal abrir porta LEDR3 LEDG0
+        -- F : out std_logic          -- sinal fechar porta LEDR4 LEDG1
+		  
+		  KEY: in std_logic_vector(3 downto 0);
+		  LEDR: out std_logic_vector(9 downto 0);
+          LEDG: out std_logic_vector(7 downto 0)
+		  
+    );
+end PortaGaragem;
+
+architecture behavior_PortaGaragem of PortaGaragem is
+    type Tipo_estado is (ABERTO, FECHADO, FECHANDO1, FECHANDO2, FECHANDO3, ABRINDO1, ABRINDO2, ABRINDO3);
+    signal atual, prox : Tipo_estado := FECHADO; -- inicializa um estado
+begin
+    -- Processo síncrono para controlar as mudanças de estado na borda de subida do clock
+    process (KEY(0), KEY(1))
+    begin
+        if KEY(1) = '0' then
+            atual <= FECHADO; -- Resetar para estado inicial
+        elsif rising_edge(KEY(0)) then
+            atual <= prox; -- Atualiza o estado na borda de subida do clock
+        end if;
+    end process;
+
+    -- Processo combinacional para definir as transições de estado
+    process (atual, KEY(2), KEY(3))
+    begin
+        -- Atualiza as saídas SA e SF conforme o estado da porta
+        LEDR(0) <= '0';
+        LEDR(1) <= '0';
+        
+        case atual is
+            when FECHADO =>
+                LEDG(0) <= '0';
+                LEDG(1) <= '0';
+                LEDR(1) <= '1';
+                LEDR(0) <= '0';
+                if KEY(2) = '0' then
+                    prox <= ABRINDO1;
+                end if;
+            when FECHANDO1 =>
+                LEDG(0) <= '0';
+                LEDG(1) <= '1';
+                LEDR(1) <= '0';
+                LEDR(0) <= '0';
+                if KEY(3) = '0' then
+                    prox <= ABRINDO3;
+                else
+                    prox <= FECHANDO2;
+                end if;
+            when FECHANDO2 =>
+                LEDG(0) <= '0';
+                LEDG(1) <= '1';
+                LEDR(1) <= '0';
+                LEDR(0) <= '0';
+                if KEY(3) = '0' then
+                    prox <= ABRINDO2;
+                else
+                    prox <= FECHANDO3;
+                end if;
+            when FECHANDO3 =>
+                LEDG(0) <= '0';
+                LEDG(1) <= '1';
+                LEDR(1) <= '0';
+                LEDR(0) <= '0';
+                if KEY(3) = '0' then
+                    prox <= ABRINDO1;
+                else
+                    prox <= FECHADO;
+                end if;
+            when ABRINDO1 =>
+                LEDG(0) <= '1';
+                LEDG(1) <= '0';
+                LEDR(1) <= '0';
+                LEDR(0) <= '0';
+                if KEY(3) = '0' then
+                    prox <= FECHANDO3;
+                else
+                    prox <= ABRINDO2;
+                end if;
+            when ABRINDO2 =>
+                LEDG(0) <= '1';
+                LEDG(1) <= '0';
+                LEDR(1) <= '0';
+                LEDR(0) <= '0';
+                if KEY(3) = '0' then
+                    prox <= FECHANDO2;
+                else
+                    prox <= ABRINDO3;
+                end if;
+            when ABRINDO3 =>
+                LEDG(0) <= '1';
+                LEDG(1) <= '0';
+                LEDR(1) <= '0';
+                LEDR(0) <= '0';
+                if KEY(3) = '0' then
+                    prox <= FECHANDO3;
+                else
+                    prox <= ABERTO;
+                end if;
+            when ABERTO =>
+                LEDG(0) <= '0';
+                LEDG(1) <= '0';
+                LEDR(0) <= '1';
+                LEDR(1) <= '0';
+                if KEY(2) = '0' then
+                    prox <= FECHANDO1;
+                end if;
+        end case;
+    end process;
+end behavior_PortaGaragem;
