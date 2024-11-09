@@ -11,8 +11,8 @@ lib: $(SRC)/tabela_hash.c $(INCLUDE)/tabela_hash.h
 	gcc -c $(SRC)/tabela_hash.c -I $(INCLUDE) -o $(OBJ)/tabela_hash.o
 
 myapp: $(OBJ)/tabela_hash.o
-	@echo "\nCompilando app"
-	gcc $(APP)/main.c $(OBJ)tabela_hash.o -I $(INCLUDE) -o $(BIN)/main
+	@echo -e "\nCompilando app"
+	gcc $(APP)/main.c $(OBJ)/tabela_hash.o -I $(INCLUDE) -o $(BIN)/main
 
 
 run: $(BIN)/main
