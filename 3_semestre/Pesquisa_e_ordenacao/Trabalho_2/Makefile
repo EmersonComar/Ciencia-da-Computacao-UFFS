@@ -21,3 +21,6 @@ run: $(BIN)/main
 clear: $(BIN)/main $(OBJ)/tabela_hash.o
 	@echo "Apagando arquivos main e tabela_hash.o"
 	rm $(BIN)/main $(OBJ)/tabela_hash.o
+
+valgrind: $(BIN)/main
+	valgrind $(BIN)/main
