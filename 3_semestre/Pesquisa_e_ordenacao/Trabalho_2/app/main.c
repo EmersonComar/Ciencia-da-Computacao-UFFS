@@ -9,22 +9,25 @@ int main(void){
     printf("Criando tabela hash\n");
     tabela_hash = criar_tabela(23);
 
-    printf("Inserindo de 0 a 100 valores na tabela\n");
-    Tlist lista;
+    printf("Abrindo arquivo casos_de_teste.txt\n");
+    FILE *arquivo = fopen("casos_de_teste.txt", "r");
 
-    for(int i=0; i<=10; i++){
-        lista.valor = i;
-        lista.next = NULL;
-        inserir_hash(tabela_hash, lista);
+    if(arquivo == NULL){
+        printf("Não foi possível abrir o arquivo\n");
+        return 1;
     }
-    
 
-    printf("Exibindo tabela hash\n");
+
+    printf("Descobrindo valores numéricos no arquivo\n"); 
+    criar_tlist(arquivo);
+
+    printf("\nExibindo tabela hash\n");
     exibir_hash(tabela_hash);
 
     printf("Limpando tabela\n");
     liberar_tabela(tabela_hash);
 
-
+    printf("Fechando arquivo\n");
+    fclose(arquivo);
     return 0;
 }

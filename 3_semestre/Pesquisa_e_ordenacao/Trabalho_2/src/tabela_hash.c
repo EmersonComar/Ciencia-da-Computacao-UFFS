@@ -2,11 +2,19 @@
 #include <stdlib.h>
 #include "tabela_hash.h"
 
-
+struct tlist{
+    int valor;
+    struct tlist *next;
+};
 
 struct hash{
     int quantidade, tamanho_tabela;
     Tlist **itens;
+};
+
+struct lista{
+    char *texto;
+    int quantidade;
 };
 
 Hash *criar_tabela(int tamanho_tabela){
@@ -103,4 +111,16 @@ void exibir_hash(Hash *tabela_hash){
             printf("NULL\n");
         }
     }
+}
+
+int potencia(int base, int expoente){
+    int total = 1;
+    for(int i=0; i<=expoente; i++){
+        total *= base;
+    }
+    return total;
+}
+
+void criar_tlist(FILE *arquivo) {
+
 }
