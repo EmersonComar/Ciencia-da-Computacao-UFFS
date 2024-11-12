@@ -19,7 +19,7 @@ int main(void){
 
 
     printf("Descobrindo valores numéricos no arquivo\n"); 
-    criar_tlist(arquivo);
+    Tlist *lista_tlist = criar_tlist(arquivo);
 
     printf("\nExibindo tabela hash\n");
     exibir_hash(tabela_hash);

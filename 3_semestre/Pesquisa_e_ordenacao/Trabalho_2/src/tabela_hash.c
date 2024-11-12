@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "tabela_hash.h"
 
+#define MAX_CASAS 10
+
 struct tlist{
     int valor;
     struct tlist *next;
@@ -13,7 +15,7 @@ struct hash{
 };
 
 struct lista{
-    char *texto;
+    char casas[MAX_CASAS];
     int quantidade;
 };
 
@@ -25,7 +27,7 @@ Hash *criar_tabela(int tamanho_tabela){
     }
 
     tabela_hash->tamanho_tabela = tamanho_tabela;
-    tabela_hash->itens = (Tlist **) malloc(tamanho_tabela * sizeof(Tlist));
+    tabela_hash->itens = (Tlist **) malloc(tamanho_tabela * sizeof(Tlist *));
     
     if(tabela_hash->itens == NULL){
         free(tabela_hash);
@@ -115,12 +117,67 @@ void exibir_hash(Hash *tabela_hash){
 
 int potencia(int base, int expoente){
     int total = 1;
-    for(int i=0; i<=expoente; i++){
+    for(int i=0; i<expoente; i++){
         total *= base;
     }
     return total;
 }
 
-void criar_tlist(FILE *arquivo) {
+int extrair_valor(Lista *lista_valores){
+    int valor = 0;
+    int expoente = lista_valores->quantidade - 1;
+    for(int i = 0; i < lista_valores->quantidade; i++){
+        valor += lista_valores->casas[i] * potencia(10, expoente);
+        expoente--;
+    }
+
+    return valor;
+}
+
+void insere_tlist(Tlist **lista_tlist, int valor){
+    Tlist *novo = (Tlist*) malloc(sizeof(Tlist));
+    if(novo == NULL){
+        printf("Erro ao alocar memória !!\n");
+        exit(1);
+    }
+
+    novo->valor = valor;
+    novo->next = NULL;
+
+    if(*lista_tlist == NULL){
+        *lista_tlist = novo;
+    } else{
+        Tlist *aux;
+        for(aux = *lista_tlist; aux->next != NULL; aux = aux->next);
+        aux->next = novo;
+    }
+}
+
+Tlist *criar_tlist(FILE *arquivo) {
+    Lista lista_valores;
+    int valor_extraido = 0;
+    char caractere;
+    Tlist *lista_tlist = NULL;
+
+    lista_valores.quantidade = 0;
+
+    while ((caractere = fgetc(arquivo)) != EOF){
+        if( caractere != ';'){
+            if (lista_valores.quantidade <= MAX_CASAS){
+                lista_valores.casas[lista_valores.quantidade] = caractere - '0';
+                lista_valores.quantidade++;
+            }
+        } else {
+            valor_extraido = extrair_valor(&lista_valores);
+            lista_valores.quantidade = 0;
+            insere_tlist(&lista_tlist, valor_extraido);
+        }
+    }
+
+    if(lista_valores.quantidade > 0){
+        valor_extraido = extrair_valor(&lista_valores);
+        lista_valores.quantidade = 0;
+        insere_tlist(&lista_tlist, valor_extraido);
+    }
 
 }
