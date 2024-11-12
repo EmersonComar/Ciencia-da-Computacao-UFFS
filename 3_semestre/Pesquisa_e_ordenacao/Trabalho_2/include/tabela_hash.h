@@ -12,6 +12,6 @@ void liberar_tabela(Hash *tabela_hash);
 int inserir_hash(Hash *tabela_hash, Tlist lista);
 void exibir_hash(Hash *tabela_hash);
 
-void criar_tlist(FILE *arquivo);
+Tlist *criar_tlist(FILE *arquivo);
 
 #endif
