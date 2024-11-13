@@ -9,7 +9,7 @@ typedef struct lista Lista;
 Hash *criar_tabela(int tamanho_tabela);
 void liberar_tabela(Hash *tabela_hash);
 
-int inserir_hash(Hash *tabela_hash, Tlist lista);
+int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist);
 void exibir_hash(Hash *tabela_hash);
 
 Tlist *criar_tlist(FILE *arquivo);

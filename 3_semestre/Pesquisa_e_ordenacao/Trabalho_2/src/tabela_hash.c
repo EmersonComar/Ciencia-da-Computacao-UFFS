@@ -67,32 +67,62 @@ int chaveDivisao(int chave, int tamanho_tabela){
     return chave % tamanho_tabela; 
 }
 
-int inserir_hash(Hash *tabela_hash, Tlist lista){
+int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
     if(tabela_hash == NULL){
         return 0;
     }
 
-    int chave = lista.valor;
-    int posicao;
+    // int chave = lista.valor;
+    // int posicao;
 
-    posicao = chaveDivisao(chave, tabela_hash->tamanho_tabela);
+    // posicao = chaveDivisao(chave, tabela_hash->tamanho_tabela);
 
-    Tlist *novo = (Tlist *) malloc(sizeof(Tlist));
-    if(novo == NULL){
-        return 0;
+    // Tlist *novo = (Tlist *) malloc(sizeof(Tlist));
+    // if(novo == NULL){
+    //     return 0;
+    // }
+
+    // *novo = lista;
+
+    // if(tabela_hash->itens[posicao] == NULL){
+    //     tabela_hash->itens[posicao] = novo;
+    // }else{
+    //     Tlist *aux;
+    //     for(aux = tabela_hash->itens[posicao]; aux->next != NULL; aux = aux->next);
+    //     aux->next = novo;
+    // }
+
+    // tabela_hash->quantidade++;
+    for(Tlist *aux = lista_tlist; aux != NULL; aux = aux->next){
+        int chave = aux->valor;
+        int posicao;
+        posicao = chaveDivisao(chave, tabela_hash->tamanho_tabela);
+        
+        printf("Valor: %d\n", aux->valor);
+        printf("Chave: %d\n", chave);
+        printf("Posição: %d\n\n", posicao);
+
+        Tlist *novo = (Tlist*) malloc(sizeof(Tlist));
+        if(novo == NULL){
+            printf("Falha ao alocar memória\n");
+            exit(1);
+        }
+
+        novo->valor = chave;
+        novo->next = NULL;
+
+        if(tabela_hash->itens[posicao] == NULL){
+            tabela_hash->itens[posicao] = novo;
+        } else {
+            Tlist *percorre;
+            for(percorre = tabela_hash->itens[posicao]; percorre->next != NULL; percorre = percorre->next);
+            percorre->next = novo;
+        }
+
+        tabela_hash->quantidade++;
     }
 
-    *novo = lista;
-
-    if(tabela_hash->itens[posicao] == NULL){
-        tabela_hash->itens[posicao] = novo;
-    }else{
-        Tlist *aux;
-        for(aux = tabela_hash->itens[posicao]; aux->next != NULL; aux = aux->next);
-        aux->next = novo;
-    }
-
-    tabela_hash->quantidade++;
+    limpar_lista(lista_tlist);
 
     return 1;
 }
@@ -103,8 +133,12 @@ void exibir_hash(Hash *tabela_hash){
     }
 
     for(int i=0; i < tabela_hash->tamanho_tabela; i++){
-        if(tabela_hash->itens[i] == NULL){
-            printf("[%d] - NULL\n", i);
+        if(tabela_hash->itens[i] != NULL){
+            printf("[%d] - ", i);
+            for(Tlist *aux = tabela_hash->itens[i]; aux != NULL; aux = aux->next){
+                printf("%d -> ", aux->valor);
+            }
+            printf("NULL\n");
         } else {
             printf("[%d] - ", i);
             for(Tlist *aux = tabela_hash->itens[i]; aux != NULL; aux = aux->next){
@@ -180,4 +214,5 @@ Tlist *criar_tlist(FILE *arquivo) {
         insere_tlist(&lista_tlist, valor_extraido);
     }
 
+    return lista_tlist;
 }
