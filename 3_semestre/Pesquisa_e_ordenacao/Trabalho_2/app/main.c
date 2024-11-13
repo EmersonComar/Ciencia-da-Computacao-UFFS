@@ -21,6 +21,9 @@ int main(void){
     printf("Descobrindo valores numéricos no arquivo\n"); 
     Tlist *lista_tlist = criar_tlist(arquivo);
 
+    printf("Transferindo valores de lista_tlist para tabela hash\n");
+    inserir_hash(tabela_hash, lista_tlist);
+
     printf("\nExibindo tabela hash\n");
     exibir_hash(tabela_hash);
 
