@@ -67,40 +67,24 @@ int chaveDivisao(int chave, int tamanho_tabela){
     return chave % tamanho_tabela; 
 }
 
+int pesquisa_hash(Hash *tabela_hash, int chave, int posicao){
+    for(Tlist *aux = tabela_hash->itens[posicao]; aux != NULL; aux = aux->next){
+        if(aux->valor == chave){
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
     if(tabela_hash == NULL){
         return 0;
     }
 
-    // int chave = lista.valor;
-    // int posicao;
-
-    // posicao = chaveDivisao(chave, tabela_hash->tamanho_tabela);
-
-    // Tlist *novo = (Tlist *) malloc(sizeof(Tlist));
-    // if(novo == NULL){
-    //     return 0;
-    // }
-
-    // *novo = lista;
-
-    // if(tabela_hash->itens[posicao] == NULL){
-    //     tabela_hash->itens[posicao] = novo;
-    // }else{
-    //     Tlist *aux;
-    //     for(aux = tabela_hash->itens[posicao]; aux->next != NULL; aux = aux->next);
-    //     aux->next = novo;
-    // }
-
-    // tabela_hash->quantidade++;
     for(Tlist *aux = lista_tlist; aux != NULL; aux = aux->next){
         int chave = aux->valor;
         int posicao;
         posicao = chaveDivisao(chave, tabela_hash->tamanho_tabela);
-        
-        printf("Valor: %d\n", aux->valor);
-        printf("Chave: %d\n", chave);
-        printf("Posição: %d\n\n", posicao);
 
         Tlist *novo = (Tlist*) malloc(sizeof(Tlist));
         if(novo == NULL){
@@ -113,10 +97,19 @@ int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
 
         if(tabela_hash->itens[posicao] == NULL){
             tabela_hash->itens[posicao] = novo;
+            printf("Valor %d inserido\n", tabela_hash->itens[posicao]->valor);
         } else {
             Tlist *percorre;
-            for(percorre = tabela_hash->itens[posicao]; percorre->next != NULL; percorre = percorre->next);
-            percorre->next = novo;
+            int insere = 0;
+            insere = pesquisa_hash(tabela_hash, chave, posicao);
+
+            if(insere){
+                for(percorre = tabela_hash->itens[posicao]; percorre->next != NULL; percorre = percorre->next);
+                percorre->next = novo;
+                printf("Valor %d inserido\n", percorre->next->valor);
+            } else {
+                free(novo);
+            }
         }
 
         tabela_hash->quantidade++;
@@ -134,12 +127,6 @@ void exibir_hash(Hash *tabela_hash){
 
     for(int i=0; i < tabela_hash->tamanho_tabela; i++){
         if(tabela_hash->itens[i] != NULL){
-            printf("[%d] - ", i);
-            for(Tlist *aux = tabela_hash->itens[i]; aux != NULL; aux = aux->next){
-                printf("%d -> ", aux->valor);
-            }
-            printf("NULL\n");
-        } else {
             printf("[%d] - ", i);
             for(Tlist *aux = tabela_hash->itens[i]; aux != NULL; aux = aux->next){
                 printf("%d -> ", aux->valor);
