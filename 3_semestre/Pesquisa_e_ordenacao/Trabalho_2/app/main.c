@@ -1,15 +1,14 @@
 #include <stdio.h>
 #include "tabela_hash.h"
 
+#define TAM_TABELA 7
+
 int main(void){
 
-    printf("Criando ponteiro\n");
-    Hash *tabela_hash;
-
     printf("Criando tabela hash\n");
-    tabela_hash = criar_tabela(23);
+    Hash *tabela_hash = criar_tabela(TAM_TABELA);
 
-    printf("Abrindo arquivo casos_de_teste.txt\n");
+    printf("Abrindo arquivo \"casos_de_teste.txt\"\n");
     FILE *arquivo = fopen("casos_de_teste.txt", "r");
 
     if(arquivo == NULL){
