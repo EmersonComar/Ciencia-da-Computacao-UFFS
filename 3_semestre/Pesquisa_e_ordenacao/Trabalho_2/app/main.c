@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "tabela_hash.h"
 
-#define TAM_TABELA 7                ///< Quantidade de índices que a tabela hash terá disponível. 
+#define TAM_TABELA 23                ///< Quantidade de índices que a tabela hash terá disponível. 
 
 
 int main(void){
