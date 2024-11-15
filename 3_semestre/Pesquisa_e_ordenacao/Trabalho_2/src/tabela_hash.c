@@ -1,22 +1,27 @@
+/// @file tabela_hash.c
+/// @brief Implementação de uma tabela de hash onde as colisões são tratadas através de encadeamento separado
+/// @author emerson.comar@estudante.uffs.edu.br
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "tabela_hash.h"
 
-#define MAX_CASAS 10
+#define MAX_CASAS 10                        ///< Número máximo de casas decimais na qual os números extraídos do arquivo poderão ter
 
 struct tlist{
-    int valor;
-    struct tlist *next;
+    int valor;                              ///< Representa o nó que será armazenado no tabela hash
+    struct tlist *next;                     ///< Ponteiro para o próximo nó
 };
 
 struct hash{
-    int quantidade, tamanho_tabela;
+    int quantidade;                         ///< Quantidade de elementos que estarão na tabela hash
+    int tamanho_tabela;                     ///< Quantidade buckets que a tabela hash terá
     Tlist **itens;
 };
 
 struct lista{
-    char casas[MAX_CASAS];
-    int quantidade;
+    char casas[MAX_CASAS];                  ///< Array que armazena os dígitos dos elementos extraídos do arquivo
+    int quantidade;                         ///< Quantidade de casas decimais que cada valor terá 
 };
 
 Hash *criar_tabela(int tamanho_tabela){
@@ -42,6 +47,8 @@ Hash *criar_tabela(int tamanho_tabela){
     return tabela_hash;
 }
 
+/// @brief Liberação da memória alocada referente à lista encadeada
+/// @param lista Lista encadeada que será liberada 
 void limpar_lista(Tlist *lista){
     Tlist *aux = lista;
     while(aux != NULL){
@@ -51,6 +58,8 @@ void limpar_lista(Tlist *lista){
     }
 }
 
+/// @brief Liberação da memória alocada da tabela hash
+/// @param tabela_hash Tabela hash que será liberada
 void liberar_tabela(Hash *tabela_hash){
     if(tabela_hash != NULL){
         for(int i=0; i < tabela_hash->tamanho_tabela; i++){
@@ -63,10 +72,19 @@ void liberar_tabela(Hash *tabela_hash){
     }
 }
 
+/// @brief Função hash responsável em determinar qual o índice o valor irá ocupar na tabela hash
+/// @param chave O valor que deseja inserir na tabela hash
+/// @param tamanho_tabela A quantidade de índices que a tabela hash terá
+/// @return O valor do índice na qual a chave será armazenada
 int chaveDivisao(int chave, int tamanho_tabela){
     return chave % tamanho_tabela; 
 }
 
+/// @brief Pesquisa se um determinado valor está presente na tabela hash
+/// @param tabela_hash Tabela hash que será pesquisada
+/// @param chave Valor que deseja procurar na tabela hash
+/// @param posicao Posição em que o valor deverá estar
+/// @return Retorna 0 caso encontrado a chave e 1 caso não encontrado
 int pesquisa_hash(Hash *tabela_hash, int chave, int posicao){
     for(Tlist *aux = tabela_hash->itens[posicao]; aux != NULL; aux = aux->next){
         if(aux->valor == chave){
@@ -76,9 +94,17 @@ int pesquisa_hash(Hash *tabela_hash, int chave, int posicao){
     return 1;
 }
 
-int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
+/**
+ * @details
+ * Irá percorrer a lista encadeada, criando um node novo e calculando a posição na tabela hash referente.
+ * Após, será inserido na tabela. Para evitar duplicata e aumentar a complexidade de busca e inserção, não será 
+ * incluídos valores duplicados na tabela hash.
+*/
+
+void inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
     if(tabela_hash == NULL){
-        return 0;
+        printf("A tabela hash ainda não foi alocada\n");
+        return;
     }
 
     for(Tlist *aux = lista_tlist; aux != NULL; aux = aux->next){
@@ -89,6 +115,8 @@ int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
         Tlist *novo = (Tlist*) malloc(sizeof(Tlist));
         if(novo == NULL){
             printf("Falha ao alocar memória\n");
+            liberar_tabela(tabela_hash);
+            limpar_lista(lista_tlist);
             exit(1);
         }
 
@@ -116,12 +144,12 @@ int inserir_hash(Hash *tabela_hash, Tlist *lista_tlist){
     }
 
     limpar_lista(lista_tlist);
-
-    return 1;
 }
 
+/// @details Percorre os itens da tabela hash que não estejam apontando para NULL e e percorre a lista encadeada, exibindo os valores contidos
 void exibir_hash(Hash *tabela_hash){
     if(tabela_hash == NULL){
+        printf("A tabela hash ainda não foi alocada\n");
         return;
     }
 
@@ -136,6 +164,10 @@ void exibir_hash(Hash *tabela_hash){
     }
 }
 
+/// @brief Realiza a operação de potenciasão
+/// @param base A base da potência
+/// @param expoente Expotente da potência
+/// @return O valor calculado da base elevado à potência
 int potencia(int base, int expoente){
     int total = 1;
     for(int i=0; i<expoente; i++){
@@ -144,6 +176,10 @@ int potencia(int base, int expoente){
     return total;
 }
 
+/// @brief Irá "converter" as casas decimais no valor numérico correto
+/// @details A função utiliza o Princípio Fundamental da Contagem para realizar a conversão
+/// @param lista_valores Estrutura de dados que conterá as casas decimais que será transformada no valor numérico
+/// @return O valor numérico extraído
 int extrair_valor(Lista *lista_valores){
     int valor = 0;
     int expoente = lista_valores->quantidade - 1;
@@ -155,6 +191,10 @@ int extrair_valor(Lista *lista_valores){
     return valor;
 }
 
+
+/// @brief Cria um novo nó tlist com o valor extraído do arquivo e insere na lista ao final da lista encadeada
+/// @param lista_tlist Endereço de memória da primeira posição da lista encadeada
+/// @param valor Valor extraído do arquivo na qual será o valor do nó criado
 void insere_tlist(Tlist **lista_tlist, int valor){
     Tlist *novo = (Tlist*) malloc(sizeof(Tlist));
     if(novo == NULL){
@@ -174,11 +214,26 @@ void insere_tlist(Tlist **lista_tlist, int valor){
     }
 }
 
+/**
+ * @details
+ * - Lê cada caracteredo arquivo até o final do arquivo, representado pelo EOF
+ * - Caso o valor seja diferente de `;` o valor será armazenado em uma posição no array
+ * e o contador `quantidade` será incrementado
+ * - Ao encontrar o valor `;` a função `extrair_valor` será chamada e, após, 
+ * o valor será inserido na lista encadeada.
+ * 
+ * @note
+ * A função assume que:
+ * - O arquivo estará corretamente formatado com apenas `;` e valores numéricos.
+ * - Os números não tenham mais do que 10 casas decimais.
+ * 
+ * @warning A memória alocada precisa ser liberada antes da finalização.
+*/
 Tlist *criar_tlist(FILE *arquivo) {
-    Lista lista_valores;
-    int valor_extraido = 0;
-    char caractere;
-    Tlist *lista_tlist = NULL;
+    Lista lista_valores;                     
+    int valor_extraido = 0;                 
+    char caractere;                         
+    Tlist *lista_tlist = NULL;              
 
     lista_valores.quantidade = 0;
 

@@ -1,7 +1,12 @@
+/// @file main.c
+/// @brief Aplicação básica com a finalidade de apresentar o funcionamento da tabela hash
+/// @author emerson.comar@estudante.uffs.edu.br
+
 #include <stdio.h>
 #include "tabela_hash.h"
 
-#define TAM_TABELA 7
+#define TAM_TABELA 7                ///< Quantidade de índices que a tabela hash terá disponível. 
+
 
 int main(void){
 
