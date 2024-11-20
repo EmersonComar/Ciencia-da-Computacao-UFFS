@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>Semaforo</string>
+        </entry>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>CLK,RST</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>11</int>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library ieee;
+use ieee.std_logic_1164.all;
+
+entity Semaforo is
+    port(
+        CLK : in std_logic;
+        RST : in std_logic;
+        LedVermelho : out std_logic;
+        LedAmarelo : out std_logic;
+        LedVerde : out std_logic
+    );
+end entity Semaforo;
+
+architecture behavior_semaforo of Semaforo is
+    type estados is (VERMELHO, VERDE, AMARELO);
+    signal atual, proximo : estados := VERMELHO;
+    signal contador : INTEGER range 0 to 15 := 0;
+begin
+    process(CLK, RST)
+    begin
+        if RST = &apos;1&apos; then
+            atual &lt;= VERMELHO;
+            contador &lt;= 0;
+        elsif rising_edge(CLK) then
+            atual &lt;= proximo;
+            if contador &lt; 15 then
+                contador &lt;= contador + 1;
+            else
+                contador &lt;= 0;
+            end if;
+        end if;
+    end process;
+
+    process(atual, contador)
+    begin
+        case atual is
+            when VERMELHO =&gt;
+                LedVermelho &lt;= &apos;1&apos;;
+                LedAmarelo &lt;= &apos;0&apos;;
+                LedVerde &lt;= &apos;0&apos;;
+                if contador = 10 then
+                    proximo &lt;= VERDE;
+                else
+                    proximo &lt;= VERMELHO;
+                end if;
+            
+            when VERDE =&gt;
+                    LedVermelho &lt;= &apos;0&apos;;
+                    LedAmarelo &lt;= &apos;0&apos;;
+                    LedVerde &lt;= &apos;1&apos;;
+                    if contador = 15 then
+                        proximo &lt;= AMARELO;
+                    else
+                        proximo &lt;= VERDE;
+                    end if;
+
+                    
+            when AMARELO =&gt;
+                    LedVermelho &lt;= &apos;0&apos;;
+                    LedAmarelo &lt;= &apos;1&apos;; 
+                    LedVerde &lt;= &apos;0&apos;;
+                    if contador = 5 then
+                        proximo &lt;= VERMELHO;
+                    else
+                        proximo &lt;= AMARELO;
+                    end if;
+            
+
+            when others =&gt;
+                    proximo &lt;= VERMELHO;
+        end case;
+    end process;
+
+end behavior_semaforo;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>LedVermelho,LedAmarelo,LedVerde</string>
+        </entry>
+      </elementAttributes>
+      <pos x="780" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes/>
+      <pos x="720" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Clock</elementName>
+      <elementAttributes/>
+      <pos x="720" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes/>
+      <pos x="1100" y="280"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Color</string>
+          <awt-color>
+            <red>255</red>
+            <green>255</green>
+            <blue>0</blue>
+            <alpha>255</alpha>
+          </awt-color>
+        </entry>
+      </elementAttributes>
+      <pos x="1100" y="320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Color</string>
+          <awt-color>
+            <red>51</red>
+            <green>255</green>
+            <blue>51</blue>
+            <alpha>255</alpha>
+          </awt-color>
+        </entry>
+      </elementAttributes>
+      <pos x="1100" y="360"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="720" y="320"/>
+      <p2 x="780" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="320"/>
+      <p2 x="1100" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="340"/>
+      <p2 x="1080" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="280"/>
+      <p2 x="740" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="280"/>
+      <p2 x="1100" y="280"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="360"/>
+      <p2 x="1100" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="740" y="300"/>
+      <p2 x="780" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="300"/>
+      <p2 x="1080" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="740" y="280"/>
+      <p2 x="740" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="280"/>
+      <p2 x="1080" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="340"/>
+      <p2 x="1080" y="360"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
