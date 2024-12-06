@@ -1,0 +1,167 @@
+{
+  "main": {
+    "id": "72bde38b62d9b695",
+    "type": "split",
+    "children": [
+      {
+        "id": "ada6b63bb98eaa32",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ec72c8748e5491f5",
+            "type": "leaf",
+            "state": {
+              "type": "pdf",
+              "state": {
+                "file": "3_semestre/Pesquisa_e_ordenacao/5_Manipulacao_arquivos/3.1..POD.Arquivos.pdf"
+              },
+              "icon": "lucide-file-text",
+              "title": "3.1..POD.Arquivos"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "8c426a4748ef37ba",
+    "type": "split",
+    "children": [
+      {
+        "id": "51ad2cb8f9c29cad",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d3d076e667291dd7",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "678c76b6c8f4eaff",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "4621f2f7409ac355",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "cbb11268a80d0b83",
+    "type": "split",
+    "children": [
+      {
+        "id": "6dcccc568a2a373e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3349ca55e7033a23",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "3_semestre/Sistemas_digitais/4_Maquinas_de_estado/Alguns_exercicios/ControleLed/controle_led.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos para controle_led"
+            }
+          },
+          {
+            "id": "7547a29c4913b62b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "3_semestre/Sistemas_digitais/4_Maquinas_de_estado/Alguns_exercicios/ControleLed/controle_led.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída para controle_led"
+            }
+          },
+          {
+            "id": "68d4577617508d24",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "cebb72dcc0b07da6",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "3_semestre/Sistemas_digitais/4_Maquinas_de_estado/Alguns_exercicios/ControleLed/controle_led.md"
+              },
+              "icon": "lucide-list",
+              "title": "Sumário de controle_led"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false
+    }
+  },
+  "active": "ec72c8748e5491f5",
+  "lastOpenFiles": [
+    "3_semestre/Sistemas_digitais/4_Maquinas_de_estado/Alguns_exercicios/ControleLed/controle_led.md"
+  ]
+}
