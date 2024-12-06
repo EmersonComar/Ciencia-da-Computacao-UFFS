@@ -18,6 +18,11 @@ entity blackjack is
         card_display: out STD_LOGIC_VECTOR(3 downto 0);
         sum_display : out STD_LOGIC_VECTOR(7 downto 0);
 
+        --debug soma dos jogadores
+
+        soma_user_display   : out STD_LOGIC_VECTOR(7 downto 0);
+        soma_dealer_display : out STD_LOGIC_VECTOR(7 downto 0);
+
         -- debug do estado atual
         INICIO : out STD_LOGIC;
         CARTA_USER_1 : out STD_LOGIC;
@@ -105,6 +110,14 @@ begin
         end if;
     end process;
 
+
+    -- Debug displays soma dos jogadores
+    process(current_state)
+    begin
+        soma_user_display   <= std_logic_vector(soma_user);
+        soma_dealer_display <= std_logic_vector(soma_dealer);
+    end process;
+
     -- Processo de registrador de estado
     process(clk, rst)
     begin
@@ -131,7 +144,7 @@ begin
                     end if;
                     soma_user <= adjust_aces(soma_user + get_card_value(carta_atual, soma_user, ases_user), ases_user);
                     
-                when STATE_CARTA_1_DEALER | STATE_CARTA_2_DEALER | STATE_NOVA_CARTA_DEALER | STATE_COMPARAR_CARTAS =>
+                when STATE_CARTA_1_DEALER | STATE_CARTA_2_DEALER   =>
                     if carta_atual = 1 then
                         ases_dealer <= ases_dealer + 1;
                     end if;
@@ -296,5 +309,5 @@ begin
                 null;
         end case;
     end process;
-    
+
 end Behavioral;
