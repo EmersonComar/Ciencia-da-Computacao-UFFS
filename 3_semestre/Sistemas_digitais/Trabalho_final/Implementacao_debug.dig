@@ -1,0 +1,1623 @@
+<?xml version="1.0" encoding="utf-8"?>
+<circuit>
+  <version>2</version>
+  <attributes/>
+  <visualElements>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>blackjack</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>clk,rst,start,hit_btn,stay_btn,random_cards,cards:4</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>16</int>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity blackjack is
+    Port ( 
+        clk         : in  STD_LOGIC;
+        rst         : in  STD_LOGIC;
+        start       : in  STD_LOGIC;
+        hit_btn     : in  STD_LOGIC;
+        stay_btn    : in  STD_LOGIC;
+        random_cards: in  STD_LOGIC;  
+        cards       : in  STD_LOGIC_VECTOR(3 downto 0);
+        
+        win_out     : out STD_LOGIC;
+        lose_out    : out STD_LOGIC;
+        tie_out     : out STD_LOGIC;
+        card_display: out STD_LOGIC_VECTOR(3 downto 0);
+        sum_display : out STD_LOGIC_VECTOR(7 downto 0);
+
+
+
+            -- debug do estado atual
+            INICIO : out STD_LOGIC;
+            CARTA_USER_1 : out STD_LOGIC;
+            CARTA_USER_2 : out STD_LOGIC;
+            ESPERAR_USER: out STD_LOGIC;
+            HIT : out STD_LOGIC;
+            STAY : out STD_LOGIC;
+            CARTA_1_DEALER : out STD_LOGIC;
+            CARTA_2_DEALER : out STD_LOGIC;
+            NOVA_CARTA_DEALER : out STD_LOGIC;
+            ESPERAR_DEALER : out STD_LOGIC;
+            COMPARAR_CARTAS : out STD_LOGIC;
+            USER_GANHOU : out STD_LOGIC;
+            USER_PERDEU : out STD_LOGIC;
+            TIE : out STD_LOGIC
+    );
+end blackjack;
+
+architecture Behavioral of blackjack is
+    type state_type is (
+        STATE_INICIO,
+        STATE_CARTA_USER_1, 
+        STATE_CARTA_USER_2, 
+        STATE_ESPERAR_USER,
+        STATE_HIT,
+        STATE_STAY,
+        STATE_CARTA_1_DEALER, 
+        STATE_CARTA_2_DEALER,
+        STATE_ESPERAR_DEALER,
+        STATE_NOVA_CARTA_DEALER, 
+        STATE_COMPARAR_CARTAS,
+        STATE_USER_GANHOU, 
+        STATE_USER_PERDEU, 
+        STATE_TIE
+    );
+    
+    signal current_state, next_state : state_type;
+    signal soma_user    : unsigned(7 downto 0) := (others =&gt; &apos;0&apos;);
+    signal soma_dealer  : unsigned(7 downto 0) := (others =&gt; &apos;0&apos;);
+    signal carta_atual  : unsigned(3 downto 0);
+    signal ases_user    : unsigned(3 downto 0) := (others =&gt; &apos;0&apos;);
+    signal ases_dealer  : unsigned(3 downto 0) := (others =&gt; &apos;0&apos;);
+    
+    function get_card_value(card: unsigned; current_sum: unsigned; num_aces: unsigned) return unsigned is
+        variable card_value: unsigned(7 downto 0);
+    begin
+        if card = 1 then
+            if current_sum &lt;= 10 then
+                card_value := to_unsigned(11, 8);
+            else
+                card_value := to_unsigned(1, 8);
+            end if;
+        elsif card &gt;= 10 and card &lt;= 13 then
+            card_value := to_unsigned(10, 8);
+        elsif card &gt; 13 then
+            card_value := to_unsigned(0, 8);
+        else
+            card_value := resize(card, 8);
+        end if;
+        return card_value;
+    end function;
+    
+    function adjust_aces(sum: unsigned; num_aces: unsigned) return unsigned is
+        variable adjusted_sum: unsigned(7 downto 0);
+        variable needed_adjustments: integer;
+    begin
+        adjusted_sum := sum;
+        
+        needed_adjustments := to_integer(sum) / 10 - 2; 
+    
+        if needed_adjustments &gt; 0 then
+            adjusted_sum := adjusted_sum - to_unsigned(needed_adjustments * 10, adjusted_sum&apos;length);
+        end if;
+        
+        return adjusted_sum;
+    end function;
+    
+    
+begin
+    -- Processo combinacional para atualizar displays
+    process(current_state, carta_atual, soma_dealer, soma_user)
+    begin
+        -- Atualização imediata dos displays
+        card_display &lt;= std_logic_vector(carta_atual);
+        if current_state = STATE_CARTA_1_DEALER or
+           current_state = STATE_CARTA_2_DEALER or
+           current_state = STATE_ESPERAR_DEALER or
+           current_state = STATE_NOVA_CARTA_DEALER then
+            sum_display &lt;= std_logic_vector(soma_dealer);
+        else
+            sum_display &lt;= std_logic_vector(soma_user);
+        end if;
+    end process;
+
+
+
+
+    -- Processo de registrador de estado
+    process(clk, rst)
+    begin
+        if rst = &apos;1&apos; then
+            current_state &lt;= STATE_INICIO;
+            soma_user &lt;= (others =&gt; &apos;0&apos;);
+            soma_dealer &lt;= (others =&gt; &apos;0&apos;);
+            ases_user &lt;= (others =&gt; &apos;0&apos;);
+            ases_dealer &lt;= (others =&gt; &apos;0&apos;);
+        elsif rising_edge(clk) then
+            current_state &lt;= next_state;
+            
+            -- Atualização das somas e contagem de ases
+            case current_state is
+                when STATE_INICIO =&gt;
+                    soma_user &lt;= (others =&gt; &apos;0&apos;);
+                    soma_dealer &lt;= (others =&gt; &apos;0&apos;);
+                    ases_user &lt;= (others =&gt; &apos;0&apos;);
+                    ases_dealer &lt;= (others =&gt; &apos;0&apos;);
+                    
+                when STATE_CARTA_USER_1 | STATE_CARTA_USER_2 | STATE_HIT =&gt;
+                    if carta_atual = 1 then
+                        ases_user &lt;= ases_user + 1;
+                    end if;
+                    soma_user &lt;= adjust_aces(soma_user + get_card_value(carta_atual, soma_user, ases_user), ases_user);
+                    
+                when STATE_NOVA_CARTA_DEALER | STATE_CARTA_1_DEALER | STATE_CARTA_2_DEALER  =&gt;
+                    if carta_atual = 1 then
+                        ases_dealer &lt;= ases_dealer + 1;
+                    end if;
+                    soma_dealer &lt;= adjust_aces(soma_dealer + get_card_value(carta_atual, soma_dealer, ases_dealer), ases_dealer);
+                    
+                when others =&gt;
+                    null;
+            end case;
+        end if;
+    end process;
+    
+    process(current_state, start, hit_btn, stay_btn, random_cards, cards, soma_user, soma_dealer)
+    begin
+        -- Valores padrão
+        next_state &lt;= current_state;
+        win_out &lt;= &apos;0&apos;;
+        lose_out &lt;= &apos;0&apos;;
+        tie_out &lt;= &apos;0&apos;;
+        
+        -- Atualização da carta atual baseada no estado
+        if random_cards = &apos;1&apos; then
+            case current_state is
+                when STATE_CARTA_USER_1 =&gt; carta_atual &lt;= &quot;0001&quot;;
+                when STATE_CARTA_USER_2 =&gt; carta_atual &lt;= &quot;0010&quot;;
+                when STATE_HIT =&gt; carta_atual &lt;= &quot;0011&quot;;
+                when STATE_CARTA_1_DEALER =&gt; carta_atual &lt;= &quot;0100&quot;;
+                when STATE_CARTA_2_DEALER =&gt; carta_atual &lt;= &quot;0101&quot;;
+                when STATE_NOVA_CARTA_DEALER =&gt; carta_atual &lt;= &quot;0110&quot;;
+                when others =&gt; carta_atual &lt;= &quot;0000&quot;;
+            end case;
+        else
+            carta_atual &lt;= unsigned(cards);
+        end if;
+        
+        case current_state is
+            when STATE_INICIO =&gt;
+                if start = &apos;1&apos; then
+                    next_state &lt;= STATE_CARTA_USER_1;
+                end if;
+                
+            when STATE_CARTA_USER_1 =&gt;
+                next_state &lt;= STATE_CARTA_USER_2;
+                
+            when STATE_CARTA_USER_2 =&gt;
+                    next_state &lt;= STATE_ESPERAR_USER;
+                
+            when STATE_ESPERAR_USER =&gt;
+                if hit_btn = &apos;1&apos; then
+                    next_state &lt;= STATE_HIT;
+                elsif stay_btn = &apos;1&apos; then
+                    next_state &lt;= STATE_STAY;
+                end if;
+                if soma_user = 21 then
+                    next_state &lt;= STATE_USER_GANHOU;
+                elsif soma_user &gt; 21 then
+                    next_state &lt;= STATE_USER_PERDEU;
+                end if;
+                
+            when STATE_HIT =&gt;
+                    next_state &lt;= STATE_ESPERAR_USER;
+                
+            when STATE_STAY =&gt;
+                next_state &lt;= STATE_CARTA_1_DEALER;
+                
+            when STATE_CARTA_1_DEALER =&gt;
+                next_state &lt;= STATE_CARTA_2_DEALER;
+                
+            when STATE_CARTA_2_DEALER =&gt;
+                next_state &lt;= STATE_ESPERAR_DEALER;
+
+            when STATE_ESPERAR_DEALER =&gt;
+                if soma_dealer &gt;= 17 then
+                    next_state &lt;= STATE_COMPARAR_CARTAS;
+                else
+                    next_state &lt;= STATE_NOVA_CARTA_DEALER;
+                end if;            
+
+            when STATE_NOVA_CARTA_DEALER =&gt;
+                next_state &lt;= STATE_ESPERAR_DEALER;
+
+            when STATE_COMPARAR_CARTAS =&gt;
+                -- Condições atualizadas para comparação correta
+                if soma_dealer &gt; 21 then
+                    -- Dealer estourou, usuário ganha
+                    next_state &lt;= STATE_USER_GANHOU;
+                elsif soma_user = soma_dealer then
+                    -- Empate
+                    next_state &lt;= STATE_TIE;
+                elsif soma_user &gt; soma_dealer then
+                    -- Usuário tem pontuação maior
+                    next_state &lt;= STATE_USER_GANHOU;
+                else
+                    -- Dealer tem pontuação maior
+                    next_state &lt;= STATE_USER_PERDEU;
+                end if;
+                
+            when STATE_USER_GANHOU =&gt;
+                win_out &lt;= &apos;1&apos;;
+                if start = &apos;1&apos; then
+                    next_state &lt;= STATE_INICIO;
+                end if;
+                
+            when STATE_USER_PERDEU =&gt;
+                lose_out &lt;= &apos;1&apos;;
+                if start = &apos;1&apos; then
+                    next_state &lt;= STATE_INICIO;
+                end if;
+                
+            when STATE_TIE =&gt;
+                tie_out &lt;= &apos;1&apos;;
+                if start = &apos;1&apos; then
+                    next_state &lt;= STATE_INICIO;
+                end if;
+        end case;
+    end process;
+
+
+
+
+
+
+        -- Processo para localizar o estado atual
+        process(current_state)
+        begin
+            -- Desativar todas as saídas inicialmente
+            INICIO &lt;= &apos;0&apos;;
+            CARTA_USER_1 &lt;= &apos;0&apos;;
+            CARTA_USER_2 &lt;= &apos;0&apos;;
+            ESPERAR_USER &lt;= &apos;0&apos;;
+            HIT &lt;= &apos;0&apos;;
+            STAY &lt;= &apos;0&apos;;
+            CARTA_1_DEALER &lt;= &apos;0&apos;;
+            CARTA_2_DEALER &lt;= &apos;0&apos;;
+            NOVA_CARTA_DEALER &lt;= &apos;0&apos;;
+            ESPERAR_DEALER &lt;= &apos;0&apos;;
+            COMPARAR_CARTAS &lt;= &apos;0&apos;;
+            USER_GANHOU &lt;= &apos;0&apos;;
+            USER_PERDEU &lt;= &apos;0&apos;;
+            TIE &lt;= &apos;0&apos;;
+    
+            case current_state is
+                when STATE_INICIO =&gt;
+                    INICIO &lt;= &apos;1&apos;;
+                when STATE_CARTA_USER_1 =&gt;
+                    CARTA_USER_1 &lt;= &apos;1&apos;;
+                when STATE_CARTA_USER_2 =&gt;
+                    CARTA_USER_2 &lt;= &apos;1&apos;;
+                when STATE_ESPERAR_USER =&gt;
+                    ESPERAR_USER &lt;= &apos;1&apos;;
+                when STATE_HIT =&gt;
+                    HIT &lt;= &apos;1&apos;;
+                when STATE_STAY =&gt;
+                    STAY &lt;= &apos;1&apos;;
+                when STATE_CARTA_1_DEALER =&gt;
+                    CARTA_1_DEALER &lt;= &apos;1&apos;;
+                when STATE_CARTA_2_DEALER =&gt;
+                    CARTA_2_DEALER &lt;= &apos;1&apos;;
+                when STATE_NOVA_CARTA_DEALER =&gt;
+                    NOVA_CARTA_DEALER &lt;= &apos;1&apos;;
+                when STATE_ESPERAR_DEALER =&gt;
+                    ESPERAR_DEALER &lt;= &apos;1&apos;;
+                when STATE_COMPARAR_CARTAS =&gt;
+                    COMPARAR_CARTAS &lt;= &apos;1&apos;;
+                when STATE_USER_GANHOU =&gt;
+                    USER_GANHOU &lt;= &apos;1&apos;;
+                when STATE_USER_PERDEU =&gt;
+                    USER_PERDEU &lt;= &apos;1&apos;;
+                when STATE_TIE =&gt;
+                    TIE &lt;= &apos;1&apos;;
+                when others =&gt;
+                    null;
+            end case;
+        end process;
+    
+end Behavioral;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>win_out,lose_out,tie_out,card_display:4,sum_display:8,INICIO,CARTA_USER_1,CARTA_USER_2,ESPERAR_USER,HIT,STAY,CARTA_1_DEALER,CARTA_2_DEALER,NOVA_CARTA_DEALER,ESPERAR_DEALER,COMPARAR_CARTAS,USER_GANHOU,USER_PERDEU,TIE</string>
+        </entry>
+      </elementAttributes>
+      <pos x="580" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Clock</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>clk</string>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>rst</string>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>start</string>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="380"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>hit</string>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="420"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>stay</string>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="460"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>random</string>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="500"/>
+    </visualElement>
+    <visualElement>
+      <elementName>In</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>cards</string>
+        </entry>
+        <entry>
+          <string>Bits</string>
+          <int>4</int>
+        </entry>
+      </elementAttributes>
+      <pos x="400" y="560"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Color</string>
+          <awt-color>
+            <red>102</red>
+            <green>255</green>
+            <blue>0</blue>
+            <alpha>255</alpha>
+          </awt-color>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>WIN-OUT</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1000" y="260"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>LOSE-OUT</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1000" y="300"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Color</string>
+          <awt-color>
+            <red>255</red>
+            <green>255</green>
+            <blue>51</blue>
+            <alpha>255</alpha>
+          </awt-color>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>TIE-OUT</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1000" y="340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>INICIO</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="440"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>CARTA-USER-1</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="480"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>CARTA-USER-2</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="520"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>ESPERAR-USER</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="560"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>HIT</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="600"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>STAY</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="640"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>CARTA-1-DEALER</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="680"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>CARTA-2-DEALER</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="720"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>NOVA-CARTA-DEALER</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="760"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>COMPARAR-CARTAS</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="840"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>USER-GANHOU</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="880"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>USER-PERDEU</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="920"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>BCD_to_7Segment</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>BCD:4</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>16</int>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+
+-- Entidade do decodificador
+entity BCD_to_7Segment is
+    Port (
+        BCD : in STD_LOGIC_VECTOR(3 downto 0); -- Entrada BCD de 4 bits
+        card_display: out STD_LOGIC_VECTOR(6 downto 0)  -- Saída do display de 7 segmentos
+    );
+end BCD_to_7Segment;
+
+-- Arquitetura do decodificador
+architecture Behavioral of BCD_to_7Segment is
+begin
+    -- Decodificação dos segmentos com base na entrada BCD
+    process(BCD)
+    begin
+        case BCD is
+            when &quot;0001&quot;  =&gt; card_display &lt;= &quot;1111001&quot;; -- Representação do número 1
+            when &quot;0010&quot;  =&gt; card_display &lt;= &quot;0100100&quot;; -- Representação do número 2
+            when &quot;0011&quot;  =&gt; card_display &lt;= &quot;0110000&quot;; -- Representação do número 3
+            when &quot;0100&quot;  =&gt; card_display &lt;= &quot;0011001&quot;; -- Representação do número 4
+            when &quot;0101&quot;  =&gt; card_display &lt;= &quot;0010010&quot;; -- Representação do número 5
+            when &quot;0110&quot;  =&gt; card_display &lt;= &quot;0000010&quot;; -- Representação do número 6
+            when &quot;0111&quot;  =&gt; card_display &lt;= &quot;1111000&quot;; -- Representação do número 7
+            when &quot;1000&quot;  =&gt; card_display &lt;= &quot;0000000&quot;; -- Representação do número 8
+            when &quot;1001&quot;  =&gt; card_display &lt;= &quot;0010000&quot;; -- Representação do número 9
+            when &quot;1010&quot;  =&gt; card_display &lt;= &quot;0001000&quot;; -- Representação do número 10 (A)
+            when &quot;1011&quot;  =&gt; card_display &lt;= &quot;0000011&quot;; -- Representação do número 11 (B)
+            when &quot;1100&quot;  =&gt; card_display &lt;= &quot;1000110&quot;; -- Representação do número 12 (C)
+            when &quot;1101&quot;  =&gt; card_display &lt;= &quot;0100001&quot;; -- Representação do número 13 (D)
+            when others  =&gt; card_display &lt;= &quot;0000000&quot;; -- Valor padrão (caso de erro)
+        end case;
+    end process;
+end Behavioral;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>card_display:7</string>
+        </entry>
+      </elementAttributes>
+      <pos x="780" y="1180"/>
+    </visualElement>
+    <visualElement>
+      <elementName>External</elementName>
+      <elementAttributes>
+        <entry>
+          <string>applicationType</string>
+          <appType>GHDL</appType>
+        </entry>
+        <entry>
+          <string>Label</string>
+          <string>Display_Controller</string>
+        </entry>
+        <entry>
+          <string>externalInputs</string>
+          <string>sum_display:8</string>
+        </entry>
+        <entry>
+          <string>Width</string>
+          <int>16</int>
+        </entry>
+        <entry>
+          <string>Code</string>
+          <string>library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.NUMERIC_STD.ALL;
+
+entity Display_Controller is
+    Port (
+        sum_display : in STD_LOGIC_VECTOR(7 downto 0);
+        -- Saídas para o primeiro display (unidades)
+        sum_u_display: out STD_LOGIC_VECTOR(6 downto 0);
+        sum_d_display: out STD_LOGIC_VECTOR(6 downto 0)
+    );
+end Display_Controller;
+
+architecture Behavioral of Display_Controller is
+    -- Sinais intermediários para armazenar valores decimais
+    signal binary_value : integer range 0 to 255;
+    signal tens, ones : integer range 0 to 9;
+    signal tens_bcd, ones_bcd : STD_LOGIC_VECTOR(3 downto 0);
+
+begin
+    -- Converte o valor binário para inteiro
+    binary_value &lt;= to_integer(unsigned(sum_display));
+    
+    -- Calcula dezenas e unidades
+    tens &lt;= binary_value / 10;
+    ones &lt;= binary_value mod 10;
+    
+    -- Converte os valores para BCD
+    tens_bcd &lt;= std_logic_vector(to_unsigned(tens, 4));
+    ones_bcd &lt;= std_logic_vector(to_unsigned(ones, 4));
+    
+    -- Processo para decodificar o dígito das unidades
+    process(ones_bcd)
+    begin
+        case ones_bcd is
+            when &quot;0000&quot; =&gt; -- 0
+                sum_u_display &lt;= &quot;1000000&quot;;  -- 7-segment display para 0
+            when &quot;0001&quot; =&gt; -- 1
+                sum_u_display &lt;= &quot;1111001&quot;;  -- 7-segment display para 1
+            when &quot;0010&quot; =&gt; -- 2
+                sum_u_display &lt;= &quot;0100100&quot;;  -- 7-segment display para 2
+            when &quot;0011&quot; =&gt; -- 3
+                sum_u_display &lt;= &quot;0110000&quot;;  -- 7-segment display para 3
+            when &quot;0100&quot; =&gt; -- 4
+                sum_u_display &lt;= &quot;0011001&quot;;  -- 7-segment display para 4
+            when &quot;0101&quot; =&gt; -- 5
+                sum_u_display &lt;= &quot;0010010&quot;;  -- 7-segment display para 5
+            when &quot;0110&quot; =&gt; -- 6
+                sum_u_display &lt;= &quot;0000010&quot;;  -- 7-segment display para 6
+            when &quot;0111&quot; =&gt; -- 7
+                sum_u_display &lt;= &quot;1111000&quot;;  -- 7-segment display para 7
+            when &quot;1000&quot; =&gt; -- 8
+                sum_u_display &lt;= &quot;0000000&quot;;  -- 7-segment display para 8
+            when &quot;1001&quot; =&gt; -- 9
+                sum_u_display &lt;= &quot;0010000&quot;;  -- 7-segment display para 9
+            when others =&gt; 
+                sum_u_display &lt;= &quot;0000000&quot;;  -- Desativa todos os segmentos
+        end case;
+    end process;
+    
+    -- Processo para decodificar o dígito das dezenas
+    process(tens_bcd)
+    begin
+        case tens_bcd is
+            when &quot;0000&quot; =&gt; -- 0
+                sum_d_display &lt;= &quot;1000000&quot;;  -- 7-segment display para 0
+            when &quot;0001&quot; =&gt; -- 1
+                sum_d_display &lt;= &quot;1111001&quot;;  -- 7-segment display para 1
+            when &quot;0010&quot; =&gt; -- 2
+                sum_d_display &lt;= &quot;0100100&quot;;  -- 7-segment display para 2
+            when &quot;0011&quot; =&gt; -- 3
+                sum_d_display &lt;= &quot;0110000&quot;;  -- 7-segment display para 3
+            when &quot;0100&quot; =&gt; -- 4
+                sum_d_display &lt;= &quot;0011001&quot;;  -- 7-segment display para 4
+            when &quot;0101&quot; =&gt; -- 5
+                sum_d_display &lt;= &quot;0010010&quot;;  -- 7-segment display para 5
+            when &quot;0110&quot; =&gt; -- 6
+                sum_d_display &lt;= &quot;0000010&quot;;  -- 7-segment display para 6
+            when &quot;0111&quot; =&gt; -- 7
+                sum_d_display &lt;= &quot;1111000&quot;;  -- 7-segment display para 7
+            when &quot;1000&quot; =&gt; -- 8
+                sum_d_display &lt;= &quot;0000000&quot;;  -- 7-segment display para 8
+            when &quot;1001&quot; =&gt; -- 9
+                sum_d_display &lt;= &quot;0010000&quot;;  -- 7-segment display para 9
+            when others =&gt; 
+                sum_d_display &lt;= &quot;0000000&quot;;  -- Desativa todos os segmentos
+        end case;
+    end process;
+
+
+    
+end Behavioral;</string>
+        </entry>
+        <entry>
+          <string>externalOutputs</string>
+          <string>sum_u_display:7,sum_d_display:7</string>
+        </entry>
+      </elementAttributes>
+      <pos x="60" y="1260"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>TIE</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="960"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Const</elementName>
+      <elementAttributes/>
+      <pos x="600" y="2000"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Seven-Seg</elementName>
+      <elementAttributes/>
+      <pos x="840" y="1680"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Splitter</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Input Splitting</string>
+          <string>7</string>
+        </entry>
+        <entry>
+          <string>Output Splitting</string>
+          <string>1,1,1,1,1,1,1</string>
+        </entry>
+      </elementAttributes>
+      <pos x="700" y="1700"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Seven-Seg</elementName>
+      <elementAttributes/>
+      <pos x="1120" y="1660"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Splitter</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Input Splitting</string>
+          <string>7</string>
+        </entry>
+        <entry>
+          <string>Output Splitting</string>
+          <string>1,1,1,1,1,1,1</string>
+        </entry>
+      </elementAttributes>
+      <pos x="980" y="1680"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Not</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Bits</string>
+          <int>7</int>
+        </entry>
+      </elementAttributes>
+      <pos x="660" y="1640"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Not</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Bits</string>
+          <int>7</int>
+        </entry>
+      </elementAttributes>
+      <pos x="920" y="1540"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Seven-Seg</elementName>
+      <elementAttributes/>
+      <pos x="1420" y="1320"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Splitter</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Input Splitting</string>
+          <string>7</string>
+        </entry>
+        <entry>
+          <string>Output Splitting</string>
+          <string>1,1,1,1,1,1,1</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="1340"/>
+    </visualElement>
+    <visualElement>
+      <elementName>Not</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Bits</string>
+          <int>7</int>
+        </entry>
+      </elementAttributes>
+      <pos x="1160" y="1180"/>
+    </visualElement>
+    <visualElement>
+      <elementName>LED</elementName>
+      <elementAttributes>
+        <entry>
+          <string>Label</string>
+          <string>ESPERAR-DEALER</string>
+        </entry>
+      </elementAttributes>
+      <pos x="1280" y="800"/>
+    </visualElement>
+  </visualElements>
+  <wires>
+    <wire>
+      <p1 x="380" y="1280"/>
+      <p2 x="640" y="1280"/>
+    </wire>
+    <wire>
+      <p1 x="1340" y="1280"/>
+      <p2 x="1440" y="1280"/>
+    </wire>
+    <wire>
+      <p1 x="1160" y="640"/>
+      <p2 x="1280" y="640"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="640"/>
+      <p2 x="1020" y="640"/>
+    </wire>
+    <wire>
+      <p1 x="960" y="260"/>
+      <p2 x="1000" y="260"/>
+    </wire>
+    <wire>
+      <p1 x="660" y="1540"/>
+      <p2 x="920" y="1540"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1800"/>
+      <p2 x="760" y="1800"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1800"/>
+      <p2 x="1060" y="1800"/>
+    </wire>
+    <wire>
+      <p1 x="1220" y="520"/>
+      <p2 x="1280" y="520"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="520"/>
+      <p2 x="1140" y="520"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1420"/>
+      <p2 x="1380" y="1420"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="400"/>
+      <p2 x="580" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="400"/>
+      <p2 x="1260" y="400"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1680"/>
+      <p2 x="1020" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="960" y="1680"/>
+      <p2 x="980" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="660"/>
+      <p2 x="1000" y="660"/>
+    </wire>
+    <wire>
+      <p1 x="1360" y="1300"/>
+      <p2 x="1460" y="1300"/>
+    </wire>
+    <wire>
+      <p1 x="1020" y="920"/>
+      <p2 x="1280" y="920"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="1180"/>
+      <p2 x="780" y="1180"/>
+    </wire>
+    <wire>
+      <p1 x="1200" y="1180"/>
+      <p2 x="1260" y="1180"/>
+    </wire>
+    <wire>
+      <p1 x="1100" y="1180"/>
+      <p2 x="1160" y="1180"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1820"/>
+      <p2 x="780" y="1820"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="1820"/>
+      <p2 x="1120" y="1820"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="540"/>
+      <p2 x="1120" y="540"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1440"/>
+      <p2 x="1340" y="1440"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="800"/>
+      <p2 x="1280" y="800"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="420"/>
+      <p2 x="460" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="420"/>
+      <p2 x="580" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="420"/>
+      <p2 x="1240" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1700"/>
+      <p2 x="740" y="1700"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1700"/>
+      <p2 x="1040" y="1700"/>
+    </wire>
+    <wire>
+      <p1 x="1140" y="680"/>
+      <p2 x="1280" y="680"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="300"/>
+      <p2 x="580" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="980" y="300"/>
+      <p2 x="1000" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="300"/>
+      <p2 x="960" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="1580"/>
+      <p2 x="1180" y="1580"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="560"/>
+      <p2 x="520" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="1200" y="560"/>
+      <p2 x="1280" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="560"/>
+      <p2 x="1100" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="800" y="1840"/>
+      <p2 x="840" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="1840"/>
+      <p2 x="1160" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1460"/>
+      <p2 x="1360" y="1460"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1720"/>
+      <p2 x="760" y="1720"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1720"/>
+      <p2 x="1060" y="1720"/>
+    </wire>
+    <wire>
+      <p1 x="1260" y="440"/>
+      <p2 x="1280" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="440"/>
+      <p2 x="1220" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1340"/>
+      <p2 x="1320" y="1340"/>
+    </wire>
+    <wire>
+      <p1 x="1260" y="1340"/>
+      <p2 x="1280" y="1340"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="960"/>
+      <p2 x="1280" y="960"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="320"/>
+      <p2 x="580" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="320"/>
+      <p2 x="980" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="1020" y="1600"/>
+      <p2 x="1120" y="1600"/>
+    </wire>
+    <wire>
+      <p1 x="800" y="1600"/>
+      <p2 x="900" y="1600"/>
+    </wire>
+    <wire>
+      <p1 x="780" y="1860"/>
+      <p2 x="880" y="1860"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="1860"/>
+      <p2 x="1140" y="1860"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="580"/>
+      <p2 x="1080" y="580"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="840"/>
+      <p2 x="1280" y="840"/>
+    </wire>
+    <wire>
+      <p1 x="1380" y="1480"/>
+      <p2 x="1420" y="1480"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="460"/>
+      <p2 x="480" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="460"/>
+      <p2 x="1200" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1740"/>
+      <p2 x="780" y="1740"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1740"/>
+      <p2 x="1080" y="1740"/>
+    </wire>
+    <wire>
+      <p1 x="600" y="2000"/>
+      <p2 x="900" y="2000"/>
+    </wire>
+    <wire>
+      <p1 x="1180" y="2000"/>
+      <p2 x="1480" y="2000"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="2000"/>
+      <p2 x="1180" y="2000"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1360"/>
+      <p2 x="1340" y="1360"/>
+    </wire>
+    <wire>
+      <p1 x="1120" y="720"/>
+      <p2 x="1280" y="720"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="340"/>
+      <p2 x="420" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="340"/>
+      <p2 x="580" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="340"/>
+      <p2 x="1000" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="740" y="1620"/>
+      <p2 x="840" y="1620"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="1620"/>
+      <p2 x="1140" y="1620"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="600"/>
+      <p2 x="1060" y="600"/>
+    </wire>
+    <wire>
+      <p1 x="1180" y="600"/>
+      <p2 x="1280" y="600"/>
+    </wire>
+    <wire>
+      <p1 x="1380" y="1240"/>
+      <p2 x="1480" y="1240"/>
+    </wire>
+    <wire>
+      <p1 x="760" y="1880"/>
+      <p2 x="860" y="1880"/>
+    </wire>
+    <wire>
+      <p1 x="20" y="220"/>
+      <p2 x="1200" y="220"/>
+    </wire>
+    <wire>
+      <p1 x="1360" y="1500"/>
+      <p2 x="1460" y="1500"/>
+    </wire>
+    <wire>
+      <p1 x="1240" y="480"/>
+      <p2 x="1280" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="480"/>
+      <p2 x="1180" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1760"/>
+      <p2 x="800" y="1760"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1760"/>
+      <p2 x="1080" y="1760"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1380"/>
+      <p2 x="1360" y="1380"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="360"/>
+      <p2 x="580" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="360"/>
+      <p2 x="1180" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="760" y="1640"/>
+      <p2 x="860" y="1640"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="1640"/>
+      <p2 x="1160" y="1640"/>
+    </wire>
+    <wire>
+      <p1 x="640" y="1640"/>
+      <p2 x="660" y="1640"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="620"/>
+      <p2 x="1040" y="620"/>
+    </wire>
+    <wire>
+      <p1 x="20" y="1260"/>
+      <p2 x="60" y="1260"/>
+    </wire>
+    <wire>
+      <p1 x="380" y="1260"/>
+      <p2 x="660" y="1260"/>
+    </wire>
+    <wire>
+      <p1 x="1320" y="1260"/>
+      <p2 x="1420" y="1260"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="880"/>
+      <p2 x="1280" y="880"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="240"/>
+      <p2 x="1180" y="240"/>
+    </wire>
+    <wire>
+      <p1 x="1340" y="1520"/>
+      <p2 x="1440" y="1520"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="500"/>
+      <p2 x="1160" y="500"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="500"/>
+      <p2 x="500" y="500"/>
+    </wire>
+    <wire>
+      <p1 x="720" y="1780"/>
+      <p2 x="800" y="1780"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="1780"/>
+      <p2 x="1040" y="1780"/>
+    </wire>
+    <wire>
+      <p1 x="1100" y="760"/>
+      <p2 x="1280" y="760"/>
+    </wire>
+    <wire>
+      <p1 x="1300" y="1400"/>
+      <p2 x="1380" y="1400"/>
+    </wire>
+    <wire>
+      <p1 x="400" y="380"/>
+      <p2 x="440" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="480" y="380"/>
+      <p2 x="580" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="380"/>
+      <p2 x="1200" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="780" y="1660"/>
+      <p2 x="880" y="1660"/>
+    </wire>
+    <wire>
+      <p1 x="640" y="1280"/>
+      <p2 x="640" y="1640"/>
+    </wire>
+    <wire>
+      <p1 x="960" y="260"/>
+      <p2 x="960" y="300"/>
+    </wire>
+    <wire>
+      <p1 x="960" y="1540"/>
+      <p2 x="960" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="1600"/>
+      <p2 x="900" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="900" y="1820"/>
+      <p2 x="900" y="2000"/>
+    </wire>
+    <wire>
+      <p1 x="1220" y="440"/>
+      <p2 x="1220" y="520"/>
+    </wire>
+    <wire>
+      <p1 x="520" y="420"/>
+      <p2 x="520" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="1160" y="500"/>
+      <p2 x="1160" y="640"/>
+    </wire>
+    <wire>
+      <p1 x="1160" y="1640"/>
+      <p2 x="1160" y="1660"/>
+    </wire>
+    <wire>
+      <p1 x="1160" y="1800"/>
+      <p2 x="1160" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="840" y="1620"/>
+      <p2 x="840" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="840" y="1820"/>
+      <p2 x="840" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="1480" y="1240"/>
+      <p2 x="1480" y="1320"/>
+    </wire>
+    <wire>
+      <p1 x="1480" y="1460"/>
+      <p2 x="1480" y="2000"/>
+    </wire>
+    <wire>
+      <p1 x="780" y="1660"/>
+      <p2 x="780" y="1740"/>
+    </wire>
+    <wire>
+      <p1 x="780" y="1820"/>
+      <p2 x="780" y="1860"/>
+    </wire>
+    <wire>
+      <p1 x="1420" y="1260"/>
+      <p2 x="1420" y="1320"/>
+    </wire>
+    <wire>
+      <p1 x="1420" y="1460"/>
+      <p2 x="1420" y="1480"/>
+    </wire>
+    <wire>
+      <p1 x="460" y="360"/>
+      <p2 x="460" y="420"/>
+    </wire>
+    <wire>
+      <p1 x="1100" y="560"/>
+      <p2 x="1100" y="760"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="1620"/>
+      <p2 x="1040" y="1700"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="1780"/>
+      <p2 x="1040" y="1860"/>
+    </wire>
+    <wire>
+      <p1 x="1040" y="620"/>
+      <p2 x="1040" y="880"/>
+    </wire>
+    <wire>
+      <p1 x="1360" y="1300"/>
+      <p2 x="1360" y="1380"/>
+    </wire>
+    <wire>
+      <p1 x="1360" y="1460"/>
+      <p2 x="1360" y="1500"/>
+    </wire>
+    <wire>
+      <p1 x="20" y="220"/>
+      <p2 x="20" y="1260"/>
+    </wire>
+    <wire>
+      <p1 x="660" y="1260"/>
+      <p2 x="660" y="1540"/>
+    </wire>
+    <wire>
+      <p1 x="980" y="300"/>
+      <p2 x="980" y="320"/>
+    </wire>
+    <wire>
+      <p1 x="1240" y="420"/>
+      <p2 x="1240" y="480"/>
+    </wire>
+    <wire>
+      <p1 x="1180" y="240"/>
+      <p2 x="1180" y="360"/>
+    </wire>
+    <wire>
+      <p1 x="1180" y="480"/>
+      <p2 x="1180" y="600"/>
+    </wire>
+    <wire>
+      <p1 x="1180" y="1580"/>
+      <p2 x="1180" y="1660"/>
+    </wire>
+    <wire>
+      <p1 x="1180" y="1800"/>
+      <p2 x="1180" y="2000"/>
+    </wire>
+    <wire>
+      <p1 x="860" y="1640"/>
+      <p2 x="860" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="860" y="1820"/>
+      <p2 x="860" y="1880"/>
+    </wire>
+    <wire>
+      <p1 x="800" y="1780"/>
+      <p2 x="800" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="800" y="1600"/>
+      <p2 x="800" y="1760"/>
+    </wire>
+    <wire>
+      <p1 x="1440" y="1280"/>
+      <p2 x="1440" y="1320"/>
+    </wire>
+    <wire>
+      <p1 x="1440" y="1460"/>
+      <p2 x="1440" y="1520"/>
+    </wire>
+    <wire>
+      <p1 x="480" y="380"/>
+      <p2 x="480" y="460"/>
+    </wire>
+    <wire>
+      <p1 x="1120" y="540"/>
+      <p2 x="1120" y="720"/>
+    </wire>
+    <wire>
+      <p1 x="1120" y="1600"/>
+      <p2 x="1120" y="1660"/>
+    </wire>
+    <wire>
+      <p1 x="1120" y="1800"/>
+      <p2 x="1120" y="1820"/>
+    </wire>
+    <wire>
+      <p1 x="420" y="320"/>
+      <p2 x="420" y="340"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="1640"/>
+      <p2 x="1060" y="1720"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="1800"/>
+      <p2 x="1060" y="1840"/>
+    </wire>
+    <wire>
+      <p1 x="1060" y="600"/>
+      <p2 x="1060" y="840"/>
+    </wire>
+    <wire>
+      <p1 x="740" y="1620"/>
+      <p2 x="740" y="1700"/>
+    </wire>
+    <wire>
+      <p1 x="1380" y="1420"/>
+      <p2 x="1380" y="1480"/>
+    </wire>
+    <wire>
+      <p1 x="1380" y="1240"/>
+      <p2 x="1380" y="1400"/>
+    </wire>
+    <wire>
+      <p1 x="1320" y="1260"/>
+      <p2 x="1320" y="1340"/>
+    </wire>
+    <wire>
+      <p1 x="1000" y="660"/>
+      <p2 x="1000" y="960"/>
+    </wire>
+    <wire>
+      <p1 x="1260" y="400"/>
+      <p2 x="1260" y="440"/>
+    </wire>
+    <wire>
+      <p1 x="1260" y="1180"/>
+      <p2 x="1260" y="1340"/>
+    </wire>
+    <wire>
+      <p1 x="1200" y="220"/>
+      <p2 x="1200" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="1200" y="460"/>
+      <p2 x="1200" y="560"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="1660"/>
+      <p2 x="880" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="880" y="1820"/>
+      <p2 x="880" y="1860"/>
+    </wire>
+    <wire>
+      <p1 x="180" y="240"/>
+      <p2 x="180" y="1180"/>
+    </wire>
+    <wire>
+      <p1 x="1460" y="1300"/>
+      <p2 x="1460" y="1320"/>
+    </wire>
+    <wire>
+      <p1 x="1460" y="1460"/>
+      <p2 x="1460" y="1500"/>
+    </wire>
+    <wire>
+      <p1 x="500" y="400"/>
+      <p2 x="500" y="500"/>
+    </wire>
+    <wire>
+      <p1 x="1140" y="520"/>
+      <p2 x="1140" y="680"/>
+    </wire>
+    <wire>
+      <p1 x="1140" y="1620"/>
+      <p2 x="1140" y="1660"/>
+    </wire>
+    <wire>
+      <p1 x="1140" y="1800"/>
+      <p2 x="1140" y="1860"/>
+    </wire>
+    <wire>
+      <p1 x="440" y="340"/>
+      <p2 x="440" y="380"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="1760"/>
+      <p2 x="1080" y="1820"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="1580"/>
+      <p2 x="1080" y="1740"/>
+    </wire>
+    <wire>
+      <p1 x="1080" y="580"/>
+      <p2 x="1080" y="800"/>
+    </wire>
+    <wire>
+      <p1 x="760" y="1640"/>
+      <p2 x="760" y="1720"/>
+    </wire>
+    <wire>
+      <p1 x="760" y="1800"/>
+      <p2 x="760" y="1880"/>
+    </wire>
+    <wire>
+      <p1 x="1020" y="640"/>
+      <p2 x="1020" y="920"/>
+    </wire>
+    <wire>
+      <p1 x="1020" y="1600"/>
+      <p2 x="1020" y="1680"/>
+    </wire>
+    <wire>
+      <p1 x="700" y="1640"/>
+      <p2 x="700" y="1700"/>
+    </wire>
+    <wire>
+      <p1 x="1340" y="1280"/>
+      <p2 x="1340" y="1360"/>
+    </wire>
+    <wire>
+      <p1 x="1340" y="1440"/>
+      <p2 x="1340" y="1520"/>
+    </wire>
+  </wires>
+  <measurementOrdering/>
+</circuit>
