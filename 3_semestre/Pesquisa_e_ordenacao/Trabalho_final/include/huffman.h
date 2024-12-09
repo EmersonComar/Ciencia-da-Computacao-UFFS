@@ -32,11 +32,20 @@ void preenche_fila_prioridade(Fila_prioridade *fila, int *tabela_frequencia);
 void gerar_arvore_huffman(Fila_prioridade *fila);
 
 // funções para gerar tabela de código
+char **alocar_dicionario(Node *node);
+void preencher_dicionario(Fila_prioridade *fila, char **dicionario);
 
+
+// funções para codificar string
+char *codificar(char **dicionario, char *texto);
+
+// funções para decodificar string
+char *decodificar(Fila_prioridade *fila, char *texto);
 
 // funções debug
 void exibir_tab_freq(int *tabela);
 void exibir_fila_priori(Fila_prioridade *fila);
 void exibir_arvore(Fila_prioridade *fila);
+void exibir_dicionario(char **dicionario);
 
 #endif
