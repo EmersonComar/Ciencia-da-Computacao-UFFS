@@ -3,55 +3,51 @@
 
 
 int main(void){
-    FILE *amostra = fopen("amostra.txt", "r");
-    int *tabela_freq;
-    Fila_prioridade *fila;
-    char **dicionario;
-    char *texto;
-    char *codigo;
-    char *decodificado;
 
+    Fila_prioridade *fila;
+    unsigned char *texto;
+    unsigned int *tabela_frequencia;
+    unsigned char **dicionario;
+    unsigned char *codificado;
+    unsigned char *decodificado;
+    char *descompactado;
+    
+    FILE *amostra = fopen("amostra.txt", "r");
     if(amostra == NULL){
-        fprintf(stderr, "Erro ao abrir arquivo \"amostra.txt\"\n");
+        fprintf(stderr, "Erro ao abrir arquivo amostra.txt\n");
+        return 1;
+    }
+
+    FILE *arq_decodificado = fopen("decodificado.txt", "w");
+    if(arq_decodificado == NULL){
+        fprintf(stderr, "Erro ao abrir arquivo decodificado.txt");
         return 1;
     }
 
     texto = ler_texto(amostra);
-    printf("Texto: %s\n", texto);
+    tabela_frequencia = criar_tabela_frequencia(texto);
 
-    tabela_freq = criar_tabela_frequencia(texto);
-    exibir_tab_freq(tabela_freq);
     fila = ciar_fila_prioridade();
-    preenche_fila_prioridade(fila, tabela_freq);
-
-    printf("Exibindo fila prioridade:\n");
-    exibir_fila_priori(fila);
-
-
-    printf("\nDebugando geração da arvore:\n");
+    preencher_fila_prioridade(fila, tabela_frequencia);
     gerar_arvore_huffman(fila);
 
-    printf("\nExibindo arvore final\n");
-    exibir_arvore(fila);
-    liberar_tabela_freq(tabela_freq);
-
-
-    printf("\nCriando e exibindo dicionário:\n");
     dicionario = alocar_dicionario(fila->elementos);
     preencher_dicionario(fila, dicionario);
     exibir_dicionario(dicionario);
 
+    codificado = codificar(dicionario, texto);
 
-    printf("Texto comprimido:\n");
-    codigo = codificar(dicionario, texto);
-    printf("%s\n", codigo);
 
-    printf("Texto decodificado:\n");
-    decodificado = decodificar(fila, codigo);
-    printf("%s\n", decodificado);
+    decodificado = decodificar(fila, codificado);
+
+    compactar(codificado);
+
+    descompactado =  descompactar(fila);
+
+    fputs(descompactado, arq_decodificado);
 
 
     fclose(amostra);
-    liberar_texto(texto);
+    fclose(arq_decodificado);
     return 0;
 }

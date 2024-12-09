@@ -2,8 +2,8 @@
 #define HUFFMAN_H
 
 struct node{
-    char caractere;
-    int frequencia;
+    unsigned char caractere;
+    unsigned int frequencia;
     struct node *dir;
     struct node *esq;
     struct node *prox;
@@ -18,34 +18,34 @@ typedef struct fila_prioridade Fila_prioridade;
 
 
 // Funções para ler e liberar o texto do arquivo amostra
-char *ler_texto(FILE *amostra);
-void liberar_texto(char *texto);
+unsigned char *ler_texto(FILE *amostra);
 
 // Funções referentes à geração de tabela de frequencia
-int *criar_tabela_frequencia(char *texto);
-void liberar_tabela_freq(int *tabela);
+unsigned int *criar_tabela_frequencia(unsigned char *texto);
 
 // funções fila_prioridade
 Fila_prioridade *ciar_fila_prioridade();
-Node *criar_node(char caractere, int frequencia);
-void preenche_fila_prioridade(Fila_prioridade *fila, int *tabela_frequencia);
+Node *criar_node(unsigned char caractere, unsigned int frequencia);
+void preencher_fila_prioridade(Fila_prioridade *fila, unsigned int *tabela_frequencia);
 void gerar_arvore_huffman(Fila_prioridade *fila);
 
 // funções para gerar tabela de código
-char **alocar_dicionario(Node *node);
-void preencher_dicionario(Fila_prioridade *fila, char **dicionario);
+unsigned char **alocar_dicionario(Node *node);
+void preencher_dicionario(Fila_prioridade *fila, unsigned char **dicionario);
 
 
 // funções para codificar string
-char *codificar(char **dicionario, char *texto);
+unsigned char *codificar(unsigned char **dicionario, unsigned char *texto);
 
 // funções para decodificar string
-char *decodificar(Fila_prioridade *fila, char *texto);
+unsigned char *decodificar(Fila_prioridade *fila, unsigned char *texto);
 
-// funções debug
-void exibir_tab_freq(int *tabela);
-void exibir_fila_priori(Fila_prioridade *fila);
-void exibir_arvore(Fila_prioridade *fila);
-void exibir_dicionario(char **dicionario);
+// funções para compactar
+void compactar(unsigned char *texto);
 
+// funções para descompactar
+char *descompactar(Fila_prioridade *fila);
+
+// funções exibir
+void exibir_dicionario(unsigned char **dicionario);
 #endif

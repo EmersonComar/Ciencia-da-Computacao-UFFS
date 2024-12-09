@@ -21,6 +21,3 @@ run: $(BIN)/main
 clear: $(BIN)/main $(OBJ)/huffman.o
 	@echo "Apagando arquivos main e huffman.o"
 	rm $(BIN)/main $(OBJ)/huffman.o
-
-valgrind: $(BIN)/main
-	valgrind $(BIN)/main
