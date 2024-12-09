@@ -144,8 +144,120 @@ void gerar_arvore_huffman(Fila_prioridade *fila){
     }
 }
 
+int altura_arvore(Node *node){
+    int dir, esq;
+
+    if(node == NULL) 
+        return 0;
+
+    esq = altura_arvore(node->esq) + 1;
+    dir = altura_arvore(node->dir) + 1;
+
+    if( esq > dir)
+        return esq;
+    else
+        return dir;
+}
+
+char **alocar_dicionario(Node *node){
+    int colunas = altura_arvore(node) + 1;
+
+    char **dicionario = (char **) malloc(ASCII * sizeof(char *));
+    if(dicionario == NULL){
+        fprintf(stderr, "Erro ao alocar memória para o dicionário\n");
+        exit(1);
+    }
+
+    for(int i = 0; i<ASCII; i++){
+        dicionario[i] = NULL;
+    }
+
+    for(int i=0; i<ASCII; i++){
+        dicionario[i] = (char *) malloc(colunas * sizeof(char));
+        if(dicionario[i] == NULL){
+            fprintf(stderr, "Erro ao alocar memória para o dicionário\n");
+            exit(1);
+        }
+
+        dicionario[i][0] = '\0';
+    }
+
+    return dicionario;
+}
+
+void preencher_dicionario_r(Node *node, char **dicionario, char *codigo, int colunas){
+
+    if(node == NULL)
+        return;
+
+    if(node->esq == NULL && node->dir == NULL){
+        strcpy(dicionario[node->caractere], codigo);
+    }else{
+        char esquerda[colunas], direita[colunas];
+
+        snprintf(esquerda, colunas, "%s0", codigo);
+        snprintf(direita, colunas, "%s1", codigo);
+
+        preencher_dicionario_r(node->esq, dicionario, esquerda, colunas);
+        preencher_dicionario_r(node->dir, dicionario, direita, colunas);
+    }
+}
+
+void preencher_dicionario(Fila_prioridade *fila, char **dicionario){
+    int colunas = altura_arvore(fila->elementos);
+    preencher_dicionario_r(fila->elementos, dicionario, "\0", colunas);
+}
 
 
+int tamanho_str(char **dicionario, char *texto){
+    int tam = 0;
+    int i = 0;
+    while(texto[i] != '\0'){
+        tam = tam + strlen(dicionario[texto[i]]);
+        i++;
+    }
+
+    return tam + 1;
+}
+
+
+char *codificar(char **dicionario, char *texto){
+    int tamanho = tamanho_str(dicionario, texto);
+    char *codigo = (char *) calloc(tamanho, sizeof(char));
+    int i = 0;
+    while(texto[i] != '\0'){
+        strcat(codigo, dicionario[texto[i]]);
+        i++;
+    }
+
+    return codigo;
+}
+
+
+char *decodificar(Fila_prioridade *fila, char *texto){
+    int i = 0;
+    Node *aux = fila->elementos;
+    char str_temp[2];
+    char *decodificado = calloc(strlen(texto), sizeof(char));
+
+    while (texto[i] != '\0'){
+        if (texto[i] == '0')
+            aux = aux->esq;
+        else
+            aux = aux->dir;
+        
+        if(aux->esq == NULL && aux->dir == NULL){
+            str_temp[0] = aux->caractere;
+            str_temp[1] = '\0';
+            strcat(decodificado, str_temp);
+            aux = fila->elementos;
+        }
+
+        i++;
+    }
+
+    return decodificado;
+}
 
 
 
@@ -215,4 +327,11 @@ void preordem(Node *node){
 void exibir_arvore(Fila_prioridade *fila){
    // exibir_arvore_r(fila->elementos, 0, 0);
    preordem(fila->elementos);
+}
+
+void exibir_dicionario(char **dicionario){
+    for(int i=0; i<ASCII; i++){
+        if(strlen(dicionario[i]) > 0)
+            printf("%c: %s\n", i, dicionario[i]);
+    }
 }

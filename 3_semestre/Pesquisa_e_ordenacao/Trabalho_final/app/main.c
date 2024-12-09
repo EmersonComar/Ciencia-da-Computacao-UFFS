@@ -8,6 +8,8 @@ int main(void){
     Fila_prioridade *fila;
     char **dicionario;
     char *texto;
+    char *codigo;
+    char *decodificado;
 
     if(amostra == NULL){
         fprintf(stderr, "Erro ao abrir arquivo \"amostra.txt\"\n");
@@ -32,6 +34,21 @@ int main(void){
     printf("\nExibindo arvore final\n");
     exibir_arvore(fila);
     liberar_tabela_freq(tabela_freq);
+
+
+    printf("\nCriando e exibindo dicionário:\n");
+    dicionario = alocar_dicionario(fila->elementos);
+    preencher_dicionario(fila, dicionario);
+    exibir_dicionario(dicionario);
+
+
+    printf("Texto comprimido:\n");
+    codigo = codificar(dicionario, texto);
+    printf("%s\n", codigo);
+
+    printf("Texto decodificado:\n");
+    decodificado = decodificar(fila, codigo);
+    printf("%s\n", decodificado);
 
 
     fclose(amostra);
