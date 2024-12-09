@@ -5,29 +5,26 @@
 
 #define ASCII 256
 
-char *ler_texto(FILE *amostra){
+unsigned char *ler_texto(FILE *amostra){
     fseek(amostra, 0, SEEK_END);
     long tamanho_texto = ftell(amostra);
     rewind(amostra);
 
-    char *texto = (char *) malloc((tamanho_texto + 1) * sizeof(char));
+    unsigned char *texto = (char *) malloc((tamanho_texto + 1) * sizeof(unsigned char));
     if (texto == NULL){
         return NULL;
     }
 
-    long bytes_lidos = fread(texto, sizeof(char), tamanho_texto, amostra);
+    long bytes_lidos = fread(texto, sizeof(unsigned char), tamanho_texto, amostra);
     texto[bytes_lidos] = '\0';
 
     return texto;
 
 }
 
-void liberar_texto(char *texto){
-    free(texto);
-}
 
-int *criar_tabela_frequencia(char *texto){
-    int *tabela = (int *) malloc(ASCII * sizeof(int));
+unsigned int *criar_tabela_frequencia(unsigned char *texto){
+    unsigned int *tabela = (unsigned int *) malloc(ASCII * sizeof(unsigned int));
 
     for(int i = 0; i<ASCII; i++){
         tabela[i] = 0;
@@ -40,9 +37,6 @@ int *criar_tabela_frequencia(char *texto){
     return tabela;
 }
 
-void liberar_tabela_freq(int *tabela){
-    free(tabela);
-}
 
 Fila_prioridade *ciar_fila_prioridade(){
     Fila_prioridade *novo = (Fila_prioridade*) malloc(sizeof(Fila_prioridade));
@@ -57,7 +51,7 @@ Fila_prioridade *ciar_fila_prioridade(){
     return novo;
 }
 
-Node *criar_node(char caractere, int frequencia){
+Node *criar_node(unsigned char caractere, unsigned int frequencia){
     Node *novo = (Node*) malloc(sizeof(Node));
     if(novo == NULL){
         fprintf(stderr, "Erro ao criar fila de prioridade\n");
@@ -103,7 +97,7 @@ void adicionar_node_arvore(Fila_prioridade *fila, Node *novo){
     }
 }
 
-void preenche_fila_prioridade(Fila_prioridade *fila, int *tabela_frequencia){
+void preencher_fila_prioridade(Fila_prioridade *fila, unsigned int *tabela_frequencia){
     for(int i = 0; i < ASCII; i++){
         if(tabela_frequencia[i] != 0){
             Node *novo = criar_node(i, tabela_frequencia[i]);
@@ -134,10 +128,6 @@ void gerar_arvore_huffman(Fila_prioridade *fila){
         }else{
             fila->elementos = novo;
         }
-
-        printf("\nFinal da %d iteração:\n", i);
-        exibir_fila_priori(fila);
-
         fila->quantidade--;
         i++;
         
@@ -159,10 +149,10 @@ int altura_arvore(Node *node){
         return dir;
 }
 
-char **alocar_dicionario(Node *node){
+unsigned char **alocar_dicionario(Node *node){
     int colunas = altura_arvore(node) + 1;
 
-    char **dicionario = (char **) malloc(ASCII * sizeof(char *));
+    unsigned char **dicionario = (unsigned char **) malloc(ASCII * sizeof(unsigned char *));
     if(dicionario == NULL){
         fprintf(stderr, "Erro ao alocar memória para o dicionário\n");
         exit(1);
@@ -173,7 +163,7 @@ char **alocar_dicionario(Node *node){
     }
 
     for(int i=0; i<ASCII; i++){
-        dicionario[i] = (char *) malloc(colunas * sizeof(char));
+        dicionario[i] = (unsigned char *) malloc(colunas * sizeof(unsigned char));
         if(dicionario[i] == NULL){
             fprintf(stderr, "Erro ao alocar memória para o dicionário\n");
             exit(1);
@@ -185,7 +175,7 @@ char **alocar_dicionario(Node *node){
     return dicionario;
 }
 
-void preencher_dicionario_r(Node *node, char **dicionario, char *codigo, int colunas){
+void preencher_dicionario_r(Node *node, unsigned char **dicionario, char *codigo, int colunas){
 
     if(node == NULL)
         return;
@@ -203,13 +193,13 @@ void preencher_dicionario_r(Node *node, char **dicionario, char *codigo, int col
     }
 }
 
-void preencher_dicionario(Fila_prioridade *fila, char **dicionario){
+void preencher_dicionario(Fila_prioridade *fila, unsigned char **dicionario){
     int colunas = altura_arvore(fila->elementos);
     preencher_dicionario_r(fila->elementos, dicionario, "\0", colunas);
 }
 
 
-int tamanho_str(char **dicionario, char *texto){
+int tamanho_str(unsigned char **dicionario, unsigned char *texto){
     int tam = 0;
     int i = 0;
     while(texto[i] != '\0'){
@@ -221,9 +211,9 @@ int tamanho_str(char **dicionario, char *texto){
 }
 
 
-char *codificar(char **dicionario, char *texto){
+unsigned char *codificar(unsigned char **dicionario, unsigned char *texto){
     int tamanho = tamanho_str(dicionario, texto);
-    char *codigo = (char *) calloc(tamanho, sizeof(char));
+    unsigned char *codigo = (unsigned char *) calloc(tamanho, sizeof(unsigned char));
     int i = 0;
     while(texto[i] != '\0'){
         strcat(codigo, dicionario[texto[i]]);
@@ -234,11 +224,11 @@ char *codificar(char **dicionario, char *texto){
 }
 
 
-char *decodificar(Fila_prioridade *fila, char *texto){
+unsigned char *decodificar(Fila_prioridade *fila, unsigned char *texto){
     int i = 0;
     Node *aux = fila->elementos;
-    char str_temp[2];
-    char *decodificado = calloc(strlen(texto), sizeof(char));
+    unsigned char str_temp[2];
+    unsigned char *decodificado = calloc(strlen(texto), sizeof(unsigned char));
 
     while (texto[i] != '\0'){
         if (texto[i] == '0')
@@ -261,75 +251,95 @@ char *decodificar(Fila_prioridade *fila, char *texto){
 
 
 
-
-
-void exibir_node(Node *noh){
-    if(noh == NULL)
-        return;
-
-    printf("Caractere: %c    ", noh->caractere);
-    printf("Frequencia: %d\n", noh->frequencia);
-}
-
-void exibir_fila_priori(Fila_prioridade *fila){
-    if(fila == NULL)
-        return;
-
-    Node *aux = fila->elementos;
-    printf("Quantidade de elementos: %d\n", fila->quantidade);
-    printf("Elementos:\n");
-    while(aux != NULL){
-        exibir_node(aux);
-        aux = aux->prox;
+void compactar(unsigned char *texto){
+    FILE *codificado = fopen("codificado.txt", "wb");
+    int i = 0;
+    int contador = 7;
+    unsigned char mascara, byte = 0;
+    
+    if(codificado == NULL){
+        fprintf(stderr, "Erro ao abrir arquivo codificado\n");
+        exit(1);
     }
 
+    while (texto[i] != '\0'){
+        mascara = 1;
+        if(texto[i] == '1'){
+            mascara = mascara << contador;
+            byte = byte | mascara;
+        }
+        contador--;
+
+        if(contador < 0){
+            fwrite(&byte, sizeof(unsigned char), 1, codificado);
+            byte = 0;
+            contador = 7;
+        }
+
+        i++;
+    }
+
+    if(contador != 7){
+        fwrite(&byte, sizeof(unsigned char), 1, codificado);
+    }
+
+    fclose(codificado);
 }
 
 
+unsigned int validar_bit(unsigned char byte, int i){
+    unsigned char mascara = (1 << i);
+    return byte & mascara;
+}
 
+char *descompactar(Fila_prioridade *fila){
+    FILE *codificado = fopen("codificado.txt", "rb");
+    Node *aux = fila->elementos;
+    unsigned char byte;
+    int i;
+    
+    int capacidade = ASCII;
+    unsigned char *decodificado = (unsigned char*) malloc(capacidade * sizeof(unsigned char));
+    int tamanho = 0;
+    
+    if(codificado == NULL){
+        fprintf(stderr, "Erro ao abrir arquivo codificado.txt");
+        exit(1);
+    }
 
-void exibir_tab_freq(int *tabela){
-    for(int i=0; i<ASCII; i++){
-        if(tabela[i] != 0){
-            printf("Letra [%c] = %d\n", i, tabela[i]);
+    while(fread(&byte, sizeof(unsigned char), 1, codificado)){
+        for(i = 7; i>= 0; i--){
+            if(validar_bit(byte, i))
+                aux = aux->dir;
+            else
+                aux = aux->esq;
+            
+
+            if(aux->dir == NULL && aux->esq == NULL){
+                if(tamanho + 1>= ASCII){
+                    capacidade *= 2;
+
+                    decodificado = realloc(decodificado, capacidade * sizeof(unsigned char));
+                    if(decodificado == NULL){
+                        fprintf(stderr, "Erro na alocação de memória\n");
+                        fclose(codificado);
+                        exit(1);
+                    }
+                }
+
+                decodificado[tamanho++] = aux->caractere;
+                aux = fila->elementos;
+            }
         }
     }
+
+    fclose(codificado);
+    decodificado[tamanho] = '\0';
+    return decodificado;
 }
 
 
-void exibir_arvore_r(Node *node, int espaco, int level){
-    if(node == NULL)
-        return;
-    
-    int gap = 4;
-    
-    espaco += gap;
-
-    exibir_arvore_r(node->esq, espaco, level + 1);
-    printf("\n");
-    for (int i = gap; i < espaco; i++){
-        printf(" ");
-    }
-    exibir_node(node);
-
-    exibir_arvore_r(node->dir, espaco, level + 1);
-}
-
-void preordem(Node *node){
-    if(node == NULL)
-        return;
-
-    exibir_node(node);
-    preordem(node->esq);
-    preordem(node->dir);
-}
-
-void exibir_arvore(Fila_prioridade *fila){
-   // exibir_arvore_r(fila->elementos, 0, 0);
-   preordem(fila->elementos);
-}
-
-void exibir_dicionario(char **dicionario){
+void exibir_dicionario(unsigned char **dicionario){
     for(int i=0; i<ASCII; i++){
         if(strlen(dicionario[i]) > 0)
             printf("%c: %s\n", i, dicionario[i]);
