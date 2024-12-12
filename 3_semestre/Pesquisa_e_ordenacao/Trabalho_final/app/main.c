@@ -10,7 +10,7 @@ int main(void){
     unsigned char **dicionario;
     unsigned char *codificado;
     unsigned char *decodificado;
-    char *descompactado;
+    unsigned char *descompactado;
     
     FILE *amostra = fopen("amostra.txt", "r");
     if(amostra == NULL){
@@ -36,18 +36,22 @@ int main(void){
     exibir_dicionario(dicionario);
 
     codificado = codificar(dicionario, texto);
-
-
     decodificado = decodificar(fila, codificado);
-
+    
     compactar(codificado);
-
     descompactado =  descompactar(fila);
-
     fputs(descompactado, arq_decodificado);
 
 
     fclose(amostra);
     fclose(arq_decodificado);
+    limpar_tabela_frequencia(tabela_frequencia);
+    limpar_fila_prioridade(fila);
+    limpar_strings(texto);
+    limpar_strings(codificado);
+    limpar_strings(decodificado);
+    limpar_strings(descompactado);
+    limpar_dicionario(dicionario);
+
     return 0;
 }

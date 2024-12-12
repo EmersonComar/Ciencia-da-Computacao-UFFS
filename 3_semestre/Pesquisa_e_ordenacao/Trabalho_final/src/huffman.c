@@ -45,7 +45,7 @@ Fila_prioridade *ciar_fila_prioridade(){
         exit(1);
     }
 
-    novo->elementos = 0;
+    novo->quantidade = 0;
     novo->elementos = NULL;
 
     return novo;
@@ -292,7 +292,7 @@ unsigned int validar_bit(unsigned char byte, int i){
     return byte & mascara;
 }
 
-char *descompactar(Fila_prioridade *fila){
+unsigned char *descompactar(Fila_prioridade *fila){
     FILE *codificado = fopen("codificado.txt", "rb");
     Node *aux = fila->elementos;
     unsigned char byte;
@@ -344,4 +344,37 @@ void exibir_dicionario(unsigned char **dicionario){
         if(strlen(dicionario[i]) > 0)
             printf("%c: %s\n", i, dicionario[i]);
     }
+}
+
+
+void limpar_strings(unsigned char *texto){
+    free(texto);
+}
+
+void limpar_tabela_frequencia(unsigned int *tabela_frequencia){
+    free(tabela_frequencia);
+}
+
+void limpar_fila_prioridade_r(Node *node){
+    if(node == NULL) return;
+
+    limpar_fila_prioridade_r(node->esq);
+    limpar_fila_prioridade_r(node->dir);
+
+    free(node);
+
+}
+
+void limpar_fila_prioridade(Fila_prioridade *fila){
+    if(fila == NULL) return;
+    
+    limpar_fila_prioridade_r(fila->elementos);
+    free(fila);
+}
+
+void limpar_dicionario(unsigned char **dicionario){
+    for(int i = 0; i < ASCII; i++){
+        free(dicionario[i]);
+    }
+    free(dicionario);
 }

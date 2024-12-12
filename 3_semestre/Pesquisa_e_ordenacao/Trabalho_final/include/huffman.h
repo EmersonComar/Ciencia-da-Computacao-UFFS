@@ -44,8 +44,14 @@ unsigned char *decodificar(Fila_prioridade *fila, unsigned char *texto);
 void compactar(unsigned char *texto);
 
 // funções para descompactar
-char *descompactar(Fila_prioridade *fila);
+unsigned char *descompactar(Fila_prioridade *fila);
 
 // funções exibir
 void exibir_dicionario(unsigned char **dicionario);
+
+// funções limpeza
+void limpar_strings(unsigned char *texto);
+void limpar_tabela_frequencia(unsigned int *tabela_frequencia);
+void limpar_fila_prioridade(Fila_prioridade *fila);
+void limpar_dicionario(unsigned char **dicionario);
 #endif
