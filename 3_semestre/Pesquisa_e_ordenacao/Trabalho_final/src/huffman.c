@@ -316,7 +316,7 @@ unsigned char *descompactar(Fila_prioridade *fila){
             
 
             if(aux->dir == NULL && aux->esq == NULL){
-                if(tamanho + 1>= ASCII){
+                if(tamanho + 1>= capacidade){
                     capacidade *= 2;
 
                     decodificado = realloc(decodificado, capacidade * sizeof(unsigned char));
