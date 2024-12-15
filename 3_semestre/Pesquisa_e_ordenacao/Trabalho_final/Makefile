@@ -1,26 +1,59 @@
-SRC 		= ./src
-BIN 		= ./bin
-OBJ 		= ./obj
-INCLUDE 	= ./include
-APP 		= ./app
+# Configurações do compilador
+CC 						= gcc
+CFLAGS					= -Wall -Wextra
+INCLUDE_FLAGS			= -I $(INCLUDE)
 
-all: lib myapp
+# Estrutura de diretórios
+SRC 					= ./src
+BIN						= ./bin
+OBJ						= ./obj
+INCLUDE					= ./include
+APP						=./app
 
-lib: $(SRC)/huffman.c $(INCLUDE)/huffman.h
-	@echo "Compilando arquivo objeto"
-	gcc -c $(SRC)/huffman.c -I $(INCLUDE) -o $(OBJ)/huffman.o
+# Nome do executável
+TARGET					= $(BIN)/main
 
-myapp: $(OBJ)/huffman.o
-	@echo -e "\nCompilando app"
-	gcc $(APP)/main.c $(OBJ)/huffman.o -I $(INCLUDE) -o $(BIN)/main
+# Arquivos fonte e objeto
+SRCS					= $(APP)/main.c $(SRC)/huffman.c
+OBJS					= $(OBJ)/main.o $(OBJ)/huffman.o
 
+# Regra padrão
+all: $(BIN) $(OBJ) $(TARGET)
 
-run: $(BIN)/main
-	$(BIN)/main
+# Criação de diretórios
+$(BIN):
+	@mkdir -p $(BIN)
 
-clear: $(BIN)/main $(OBJ)/huffman.o
-	@echo "Apagando arquivos main e huffman.o"
-	rm $(BIN)/main $(OBJ)/huffman.o
+$(OBJ):
+	@mkdir -p $(OBJ)
 
-valgrind: $(BIN)/main
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes $(BIN)/main
+# Compilação de objetos
+$(OBJ)/main.o: $(APP)/main.c
+	@echo "Compilando main.c"
+	@$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
+
+$(OBJ)/huffman.o: $(SRC)/huffman.c $(INCLUDE)/huffman.h
+	@echo "Compilando huffman.c"
+	@$(CC) $(CFLAGS) $(INCLUDE_FLAGS) -c $< -o $@
+
+# Linkagem
+$(TARGET): $(OBJS)
+	@echo  "Linkando aplicativo"
+	@$(CC) $(CFLAGS) $^ -o $@
+
+# Execução
+run: $(TARGET)
+	@echo "Executando aplicativo"
+	@$(TARGET)
+
+# Verificação de memória com Valgrind
+valgrind: $(TARGET)
+	@echo "Executando valgrind"
+	@valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes $(TARGET)
+
+# Limpeza
+clean:
+	@echo "Removendo arquivos compilados"
+	@rm -rf $(BIN)/* $(OBJ)/*
+
+rebuild: clean all
