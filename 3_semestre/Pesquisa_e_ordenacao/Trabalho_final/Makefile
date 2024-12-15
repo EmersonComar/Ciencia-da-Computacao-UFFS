@@ -1,6 +1,6 @@
 # Configurações do compilador
 CC 						= gcc
-CFLAGS					= -Wall -Wextra
+CFLAGS					= -Wall -Wextra -pedantic
 INCLUDE_FLAGS			= -I $(INCLUDE)
 
 # Estrutura de diretórios

@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 
-void exibirBit(unsigned char byte){
+void exibirBit(  char byte){
     for(int i = 7; i >= 0; i--){
         printf("%d", (byte >> i) & 1);
     }
@@ -21,8 +21,8 @@ int main(int argc, char *argv[]){
         return 1;
     }
 
-    unsigned char byte;
-    while (fread(&byte, sizeof(unsigned char), 1, arquivo) == 1) {
+      char byte;
+    while (fread(&byte, sizeof(  char), 1, arquivo) == 1) {
         exibirBit(byte);
     }
 
