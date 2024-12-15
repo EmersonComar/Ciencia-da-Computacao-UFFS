@@ -5,12 +5,12 @@
 int main(void){
 
     Fila_prioridade *fila;
-    unsigned char *texto;
-    unsigned int *tabela_frequencia;
-    unsigned char **dicionario;
-    unsigned char *codificado;
-    unsigned char *decodificado;
-    unsigned char *descompactado;
+      char *texto;
+      int *tabela_frequencia;
+      char **dicionario;
+      char *codificado;
+      char *decodificado;
+    char *descompactado;
     
     FILE *amostra = fopen("amostra.txt", "r");
     if(amostra == NULL){

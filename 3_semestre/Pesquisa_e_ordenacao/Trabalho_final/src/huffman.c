@@ -5,17 +5,17 @@
 
 #define ASCII 256
 
-unsigned char *ler_texto(FILE *amostra){
+  char *ler_texto(FILE *amostra){
     fseek(amostra, 0, SEEK_END);
     long tamanho_texto = ftell(amostra);
     rewind(amostra);
 
-    unsigned char *texto = (char *) malloc((tamanho_texto + 1) * sizeof(unsigned char));
+      char *texto = (char *) malloc((tamanho_texto + 1) * sizeof(  char));
     if (texto == NULL){
         return NULL;
     }
 
-    long bytes_lidos = fread(texto, sizeof(unsigned char), tamanho_texto, amostra);
+    long bytes_lidos = fread(texto, sizeof(  char), tamanho_texto, amostra);
     texto[bytes_lidos] = '\0';
 
     return texto;
@@ -23,15 +23,15 @@ unsigned char *ler_texto(FILE *amostra){
 }
 
 
-unsigned int *criar_tabela_frequencia(unsigned char *texto){
-    unsigned int *tabela = (unsigned int *) malloc(ASCII * sizeof(unsigned int));
+  int *criar_tabela_frequencia(  char *texto){
+      int *tabela = (  int *) malloc(ASCII * sizeof(  int));
 
-    for(int i = 0; i<ASCII; i++){
+    for(size_t i = 0; i<ASCII; i++){
         tabela[i] = 0;
     }
 
-    for(int i=0; i<strlen(texto); i++){
-        tabela[texto[i]]++;
+    for(size_t i=0; i<strlen(texto); i++){
+        tabela[(unsigned char)texto[i]]++;
     }
 
     return tabela;
@@ -51,7 +51,7 @@ Fila_prioridade *ciar_fila_prioridade(){
     return novo;
 }
 
-Node *criar_node(unsigned char caractere, unsigned int frequencia){
+Node *criar_node(  char caractere,   int frequencia){
     Node *novo = (Node*) malloc(sizeof(Node));
     if(novo == NULL){
         fprintf(stderr, "Erro ao criar fila de prioridade\n");
@@ -97,7 +97,7 @@ void adicionar_node_arvore(Fila_prioridade *fila, Node *novo){
     }
 }
 
-void preencher_fila_prioridade(Fila_prioridade *fila, unsigned int *tabela_frequencia){
+void preencher_fila_prioridade(Fila_prioridade *fila,   int *tabela_frequencia){
     for(int i = 0; i < ASCII; i++){
         if(tabela_frequencia[i] != 0){
             Node *novo = criar_node(i, tabela_frequencia[i]);
@@ -149,10 +149,10 @@ int altura_arvore(Node *node){
         return dir;
 }
 
-unsigned char **alocar_dicionario(Node *node){
+  char **alocar_dicionario(Node *node){
     int colunas = altura_arvore(node) + 1;
 
-    unsigned char **dicionario = (unsigned char **) malloc(ASCII * sizeof(unsigned char *));
+      char **dicionario = (  char **) malloc(ASCII * sizeof(  char *));
     if(dicionario == NULL){
         fprintf(stderr, "Erro ao alocar memória para o dicionário\n");
         exit(1);
@@ -163,7 +163,7 @@ unsigned char **alocar_dicionario(Node *node){
     }
 
     for(int i=0; i<ASCII; i++){
-        dicionario[i] = (unsigned char *) malloc(colunas * sizeof(unsigned char));
+        dicionario[i] = (  char *) malloc(colunas * sizeof(  char));
         if(dicionario[i] == NULL){
             fprintf(stderr, "Erro ao alocar memória para o dicionário\n");
             exit(1);
@@ -175,13 +175,13 @@ unsigned char **alocar_dicionario(Node *node){
     return dicionario;
 }
 
-void preencher_dicionario_r(Node *node, unsigned char **dicionario, char *codigo, int colunas){
+void preencher_dicionario_r(Node *node,   char **dicionario, char *codigo, int colunas){
 
     if(node == NULL)
         return;
 
     if(node->esq == NULL && node->dir == NULL){
-        strcpy(dicionario[node->caractere], codigo);
+        strcpy(dicionario[(unsigned char)node->caractere], codigo);
     }else{
         char esquerda[colunas], direita[colunas];
 
@@ -193,13 +193,13 @@ void preencher_dicionario_r(Node *node, unsigned char **dicionario, char *codigo
     }
 }
 
-void preencher_dicionario(Fila_prioridade *fila, unsigned char **dicionario){
+void preencher_dicionario(Fila_prioridade *fila,   char **dicionario){
     int colunas = altura_arvore(fila->elementos);
     preencher_dicionario_r(fila->elementos, dicionario, "\0", colunas);
 }
 
 
-int tamanho_str(unsigned char **dicionario, unsigned char *texto){
+int tamanho_str(  char **dicionario,   char *texto){
     int tam = 0;
     int i = 0;
     while(texto[i] != '\0'){
@@ -211,12 +211,12 @@ int tamanho_str(unsigned char **dicionario, unsigned char *texto){
 }
 
 
-unsigned char *codificar(unsigned char **dicionario, unsigned char *texto){
+  char *codificar(  char **dicionario,   char *texto){
     int tamanho = tamanho_str(dicionario, texto);
-    unsigned char *codigo = (unsigned char *) calloc(tamanho, sizeof(unsigned char));
+      char *codigo = (  char *) calloc(tamanho, sizeof(  char));
     int i = 0;
     while(texto[i] != '\0'){
-        strcat(codigo, dicionario[texto[i]]);
+        strcat(codigo, dicionario[(unsigned char)texto[i]]);
         i++;
     }
 
@@ -224,11 +224,11 @@ unsigned char *codificar(unsigned char **dicionario, unsigned char *texto){
 }
 
 
-unsigned char *decodificar(Fila_prioridade *fila, unsigned char *texto){
+char *decodificar(Fila_prioridade *fila,   char *texto){
     int i = 0;
     Node *aux = fila->elementos;
-    unsigned char str_temp[2];
-    unsigned char *decodificado = calloc(strlen(texto), sizeof(unsigned char));
+    char str_temp[2];
+    char *decodificado = calloc(strlen(texto), sizeof(char));
 
     while (texto[i] != '\0'){
         if (texto[i] == '0')
@@ -251,11 +251,11 @@ unsigned char *decodificar(Fila_prioridade *fila, unsigned char *texto){
 
 
 
-void compactar(unsigned char *texto){
+void compactar(  char *texto){
     FILE *codificado = fopen("codificado.txt", "wb");
     int i = 0;
     int contador = 7;
-    unsigned char mascara, byte = 0;
+      char mascara, byte = 0;
     
     if(codificado == NULL){
         fprintf(stderr, "Erro ao abrir arquivo codificado\n");
@@ -271,7 +271,7 @@ void compactar(unsigned char *texto){
         contador--;
 
         if(contador < 0){
-            fwrite(&byte, sizeof(unsigned char), 1, codificado);
+            fwrite(&byte, sizeof(  char), 1, codificado);
             byte = 0;
             contador = 7;
         }
@@ -280,26 +280,26 @@ void compactar(unsigned char *texto){
     }
 
     if(contador != 7){
-        fwrite(&byte, sizeof(unsigned char), 1, codificado);
+        fwrite(&byte, sizeof(  char), 1, codificado);
     }
 
     fclose(codificado);
 }
 
 
-unsigned int validar_bit(unsigned char byte, int i){
-    unsigned char mascara = (1 << i);
+  int validar_bit(  char byte, int i){
+      char mascara = (1 << i);
     return byte & mascara;
 }
 
-unsigned char *descompactar(Fila_prioridade *fila){
+  char *descompactar(Fila_prioridade *fila){
     FILE *codificado = fopen("codificado.txt", "rb");
     Node *aux = fila->elementos;
-    unsigned char byte;
+      char byte;
     int i;
     
     int capacidade = ASCII;
-    unsigned char *decodificado = (unsigned char*) malloc(capacidade * sizeof(unsigned char));
+      char *decodificado = (  char*) malloc(capacidade * sizeof(  char));
     int tamanho = 0;
     
     if(codificado == NULL){
@@ -307,7 +307,7 @@ unsigned char *descompactar(Fila_prioridade *fila){
         exit(1);
     }
 
-    while(fread(&byte, sizeof(unsigned char), 1, codificado)){
+    while(fread(&byte, sizeof(  char), 1, codificado)){
         for(i = 7; i>= 0; i--){
             if(validar_bit(byte, i))
                 aux = aux->dir;
@@ -319,7 +319,7 @@ unsigned char *descompactar(Fila_prioridade *fila){
                 if(tamanho + 1>= capacidade){
                     capacidade *= 2;
 
-                    decodificado = realloc(decodificado, capacidade * sizeof(unsigned char));
+                    decodificado = realloc(decodificado, capacidade * sizeof(  char));
                     if(decodificado == NULL){
                         fprintf(stderr, "Erro na alocação de memória\n");
                         fclose(codificado);
@@ -339,7 +339,7 @@ unsigned char *descompactar(Fila_prioridade *fila){
 }
 
 
-void exibir_dicionario(unsigned char **dicionario){
+void exibir_dicionario(  char **dicionario){
     for(int i=0; i<ASCII; i++){
         if(strlen(dicionario[i]) > 0)
             printf("%c: %s\n", i, dicionario[i]);
@@ -347,11 +347,11 @@ void exibir_dicionario(unsigned char **dicionario){
 }
 
 
-void limpar_strings(unsigned char *texto){
+void limpar_strings(  char *texto){
     free(texto);
 }
 
-void limpar_tabela_frequencia(unsigned int *tabela_frequencia){
+void limpar_tabela_frequencia(  int *tabela_frequencia){
     free(tabela_frequencia);
 }
 
@@ -372,7 +372,7 @@ void limpar_fila_prioridade(Fila_prioridade *fila){
     free(fila);
 }
 
-void limpar_dicionario(unsigned char **dicionario){
+void limpar_dicionario(  char **dicionario){
     for(int i = 0; i < ASCII; i++){
         free(dicionario[i]);
     }
