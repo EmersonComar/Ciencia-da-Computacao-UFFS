@@ -8,7 +8,6 @@ int main(void){
     int vetor[] = {1, 2, 3, 4, 5};
 
     int N = sizeof(vetor)/sizeof(vetor[0]);
-
     printf("Vetor desordenado:\n");
     exibirVetor(vetor, N);
 
