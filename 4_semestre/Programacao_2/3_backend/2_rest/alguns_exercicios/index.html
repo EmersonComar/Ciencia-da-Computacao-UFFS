@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Compra direta</title>
+</head>
+<body>
+  <h1>Compra direta sem formulário</h1>
+
+  <label>
+    Preço:
+    <input type="number" id="preco" step="0.01" placeholder="Ex: 100.00">
+  </label><br><br>
+
+  <label>
+    Forma de pagamento:
+    <select id="formaPagamento">
+      <option value="1">À vista (5% desconto)</option>
+      <option value="2">Parcelado (10% acréscimo)</option>
+    </select>
+  </label><br><br>
+
+  <button id="btnComprar">Comprar</button>
+
+  <div id="resultado" style="margin-top: 20px;"></div>
+
+  <script>
+    document.getElementById('btnComprar').addEventListener('click', async () => {
+      const precoInput = document.getElementById('preco').value;
+      const formaPagamentoInput = document.getElementById('formaPagamento').value;
+
+      const preco = parseFloat(precoInput);
+      const formaPagamento = parseInt(formaPagamentoInput);
+
+      if (isNaN(preco) || preco <= 0) {
+        return alert("Coloca um preço válido aí, zé!");
+      }
+
+      try {
+        const res = await fetch('http://127.0.0.1:3001/comprar-produto', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ preco, formaPagamento })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Erro desconhecido');
+        }
+
+        document.getElementById('resultado').innerText = `
+          Preço original: R$${data.preco}
+          Forma de pagamento: ${data.formaPagamento}
+          Preço final: R$${data.precoFinal}
+        `;
+      } catch (err) {
+        document.getElementById('resultado').innerText = `Deu ruim: ${err.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
