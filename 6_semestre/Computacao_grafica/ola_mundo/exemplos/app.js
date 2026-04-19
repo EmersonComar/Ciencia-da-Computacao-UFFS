@@ -1,4 +1,7 @@
-import * as THREE from 'three';
+// import * as THREE from 'three'; // Removido pois Three.js é carregado globalmente
+
+console.log('Three.js loaded:', typeof THREE);
+console.log('Starting app...');
 
 // --- 1. Criar a cena ---
 const scene = new THREE.Scene();
@@ -18,11 +21,9 @@ document.body.appendChild(renderer.domElement); // adiciona o <canvas> ao body
 // --- 4. Adicionar um objeto 3D (cubo) ---
 // Geometria: cubo de lado 1.5
 const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
-// Material: cores vibrantes (cada face uma cor? Não, usamos um material que responde à luz)
-const material = new THREE.MeshStandardMaterial({ 
-    color: 0x44aa88,
-    roughness: 0.3,
-    metalness: 0.1
+// Material: cores vibrantes (usando BasicMaterial para teste, sem necessidade de luzes)
+const material = new THREE.MeshBasicMaterial({ 
+    color: 0x44aa88
 });
 // Malha
 const cube = new THREE.Mesh(geometry, material);
@@ -46,6 +47,8 @@ scene.add(fillLight);
 // --- 6. Animar o cubo (loop de renderização) ---
 function animate() {
     requestAnimationFrame(animate);
+    
+    console.log('Animating...');
     
     // Rotacionar o cubo
     cube.rotation.x += 0.01;

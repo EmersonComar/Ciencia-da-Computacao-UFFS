@@ -1,34 +1,26 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <title>Meu primeiro Three.js</title>
+    <meta charset=utf-8>
+    <title>Computação Visual - Three.js - Exemplo 1</title>
     <style>
+        html,
         body {
             margin: 0;
-            overflow: hidden;
+            height: 100%;
         }
 
         canvas {
-            display: block;
+            width: 100%;
+            height: 100%
         }
     </style>
-
-    <!-- Importando a biblioteca via CDN -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js"
-            }
-        }
-    </script>
 </head>
 
 <body>
-    <!-- O Three.js vai inserir o canvas aqui automaticamente -->
-
-    <script type="module" src="main.js"></script>
+    <script src="js/three.min.js"></script>
+    <script src="exemplos/app.js"></script>
 </body>
 
 </html>

@@ -10,6 +10,9 @@ obj/
 #direório vscode
 .vscode/
 
+# diretório obsidian
+.obsidian/
+
 # Compiled class file
 *.class
 
