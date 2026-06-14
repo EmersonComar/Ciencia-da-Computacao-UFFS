@@ -8,9 +8,9 @@ const COMPRIMENTO_CUBO_FALHA = 1.4;
 const PROFUNDIDADE_CUBO_FALHA = 0.2;
 const CHANCE_OBSTACULO        = 0.1;
 const CHANCE_MAXIMA_OBSTACULO = 0.3;
-const CHANCE_POWERUP          = 0.12; // 12% de chance de spawnar power-up
+const CHANCE_POWERUP          = 0.12;
 
-const ARCOS_NO_POOL      = 8;  // aumentado para acomodar power-ups no pool
+const ARCOS_NO_POOL      = 10;
 const LIMITE_DISPERSAO   = 3;
 const RANKING_KEY        = 'radarcos';
 
@@ -19,10 +19,9 @@ const VELOCIDADE_MAXIMA   = 0.55;
 const TEMPO_ESCALA        = 90000;
 const NIVEL_INICIAL       = 1.0;
 
-// Duração dos power-ups temporários (ms)
 const DURACAO_INVENCIVEL  = 5000;
 const DURACAO_MULTI       = 8000;
-const MULTI_VALOR         = 3;    // multiplicador de pontos
+const MULTI_VALOR         = 3;    
 const VIDAS_INICIAIS      = 1;   
 
 class InputManager {
@@ -197,24 +196,19 @@ class Player {
     get posZ() { return this.mesh.position.z; }
 }
 
-// =============================================================================
-// PowerUpManager — controla o power-up ativo e seu tempo restante
-// =============================================================================
 class PowerUpManager {
     constructor() {
-        this.tipo          = null;  // null | 'vida' | 'invencivel' | 'multi'
+        this.tipo          = null;
         this.tempoRestante = 0;
     }
 
-    /** Ativa um power-up. Se já houver um ativo, substitui. */
     ativar(tipo) {
         this.tipo = tipo;
         if (tipo === 'invencivel') this.tempoRestante = DURACAO_INVENCIVEL;
         else if (tipo === 'multi') this.tempoRestante = DURACAO_MULTI;
-        else this.tempoRestante = 0; // 'vida' é instantâneo, sem duração
+        else this.tempoRestante = 0; 
     }
 
-    /** Avança o timer. Retorna true se o power-up expirou neste tick. */
     tick(deltams) {
         if (!this.tipo || this.tipo === 'vida') return false;
         this.tempoRestante -= deltams;
@@ -271,7 +265,6 @@ class ArcoPool {
         this._ativos = [];
     }
 
-    // Mapeia tipo → geometria e material
     _geoParaTipo(tipo) {
         if (tipo === 'falha')     return this._geoFalha;
         if (tipo === 'vida')      return this._geoVida;
@@ -291,12 +284,10 @@ class ArcoPool {
         const mesh = this._pool.find(m => !m.userData.ativo);
         if (!mesh) return;
 
-        // Sorteia o tipo: power-up > obstáculo > arco (em ordem de prioridade)
         const r = Math.random();
         const chanceObstaculo = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
         let tipo;
         if (r < CHANCE_POWERUP) {
-            // Sorteia qual power-up: 40% vida, 30% invencível, 30% multi
             const rPU = Math.random();
             tipo = rPU < 0.4 ? 'vida' : rPU < 0.7 ? 'invencivel' : 'multi';
         } else if (r < CHANCE_POWERUP + chanceObstaculo) {
@@ -312,8 +303,7 @@ class ArcoPool {
             posZ
         );
 
-        // Reseta rotação — meshes reutilizados do pool podem ter rotação
-        // acumulada de quando eram power-ups girando a cada frame
+        
         mesh.rotation.set(0, 0, 0);
 
         mesh.geometry        = this._geoParaTipo(tipo);
@@ -343,7 +333,6 @@ class ArcoPool {
         for (let i = this._ativos.length - 1; i >= 0; i--) {
             const obj = this._ativos[i];
             obj.position.z += velocidadeZ;
-            // Rotaciona power-ups para destaque visual
             if (obj.userData.tipo !== 'arco' && obj.userData.tipo !== 'falha') {
                 obj.rotation.y += 0.04;
                 obj.rotation.x += 0.02;
@@ -532,7 +521,6 @@ class Game {
             this._vidas++;
             this._hud.atualizarVidas(this._vidas);
         } else {
-            // Invencibilidade ou multiplicador — apenas um ativo por vez
             this._powerup.ativar(tipo);
             const nomes = { invencivel: '⚡ Invencível', multi: `✖️ x${MULTI_VALOR}` };
             this._hud.atualizarPowerup(nomes[tipo], this._powerup.tempoRestante);
@@ -548,7 +536,6 @@ class Game {
             this._nivelDificuldade  = NIVEL_INICIAL + this._tempoDecorrido / TEMPO_ESCALA;
             this._velocidadeZ       = Math.min(VELOCIDADE_INICIAL * this._nivelDificuldade, VELOCIDADE_MAXIMA);
 
-            // Tick do power-up ativo
             const expirou = this._powerup.tick(delta);
             if (expirou) {
                 this._hud.atualizarPowerup(null, 0);
@@ -574,7 +561,6 @@ class Game {
                 if (this._vidas <= 0) {
                     this.mudarEstado('GAMEOVER');
                 }
-                // Se ainda tem vidas, o jogo continua
             }
         }
 
