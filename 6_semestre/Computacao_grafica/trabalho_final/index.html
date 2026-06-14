@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo dos Arcos 3D</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+    <div id="hud" class="hud">
+        Pontos: <span id="hud-pontos">0</span>
+    </div>
+
+    <div id="canvas-container"></div>
+
+    <div id="menu-inicial" class="ui-layer">
+        <h1>Jogo dos Arcos 3D</h1>
+        <button id="btn-jogar">Jogar</button>
+        <button id="btn-ranking-menu">Exibir Ranking</button>
+    </div>
+
+    <div id="tela-game-over" class="ui-layer" style="display: none;">
+        <h1>Game Over!</h1>
+        <p>Sua pontuação final foi: <span id="pontos-finais">0</span></p>
+        <label for="nome-jogador">Digite seu nome para o Ranking:</label>
+        <input type="text" id="nome-jogador" placeholder="Seu Nome" maxlength="15">
+        <button id="btn-salvar-ranking">Salvar e Ver Ranking</button>
+    </div>
+
+    <div id="tela-ranking" class="ui-layer" style="display: none;">
+        <h1>🏆 TOP 5 RANKING</h1>
+        <ol id="lista-ranking" style="font-size: 20px; text-align: left; margin-bottom: 20px;"></ol>
+        <button id="btn-jogar-novamente">Jogar Novamente</button>
+        <button id="btn-voltar-menu" class="btn-voltar">Voltar ao Menu</button>
+        <button id="btn-limpar-ranking" class="btn-sair">Limpar Ranking</button>
+    </div>
+
+    <script src="js/game.js"></script>
+</body>
+</html>
