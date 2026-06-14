@@ -21,10 +21,10 @@ const NIVEL_INICIAL       = 1.0;
 
 const DURACAO_INVENCIVEL  = 5000;
 const DURACAO_MULTI       = 8000;
-const DURACAO_FORMA       = 8000;  // duração dos power-ups de transformação
+const DURACAO_FORMA       = 8000;
 const MULTI_VALOR         = 3;
 const VIDAS_INICIAIS      = 1;
-const CHANCE_FORMA        = 0.04;  // 4% total — ~1,3% por tipo (baixissímo)   
+const CHANCE_FORMA        = 0.04;
 
 class InputManager {
     constructor() {
@@ -141,10 +141,11 @@ class SceneManager {
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById(containerId).appendChild(this.renderer.domElement);
 
-        this.scene.add(new THREE.AmbientLight(0xffffff, 0.6));
-        const luzDir = new THREE.DirectionalLight(0xffffff, 0.8);
-        luzDir.position.set(5, 10, 7);
-        this.scene.add(luzDir);
+        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        this.scene.add(this.ambientLight);
+        this.dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        this.dirLight.position.set(5, 10, 7);
+        this.scene.add(this.dirLight);
 
         this._onResize = this._onResize.bind(this);
         window.addEventListener('resize', this._onResize);
@@ -167,27 +168,94 @@ class SceneManager {
 
 class Player {
     constructor(scene) {
-        const geo    = new THREE.SphereGeometry(RAIO_BOLA, 16, 16);
-        this._mat    = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        this.mesh    = new THREE.Mesh(geo, this._mat);
+        this._scene = scene;
+        this.mesh   = new THREE.Object3D();
+        this.mesh.name = 'airplane';
+
+        // ── Materiais ──────────────────────────────────────────────────────
+        this._matBody   = new THREE.MeshStandardMaterial({ color: 0xcc2200, flatShading: true });
+        this._matEngine = new THREE.MeshStandardMaterial({ color: 0xeeeeee, flatShading: true });
+        this._matProp   = new THREE.MeshStandardMaterial({ color: 0x8B4513, flatShading: true });
+        this._matBlade  = new THREE.MeshStandardMaterial({ color: 0x3D1C02, flatShading: true });
+        this._matGlass  = new THREE.MeshStandardMaterial({
+            color: 0xaaddff, transparent: true, opacity: 0.35, flatShading: true
+        });
+
+        // ── Fuselagem (orientada em Z: nariz em -Z, cauda em +Z) ──────────
+        const fuselage = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 1.3), this._matBody);
+        this.mesh.add(fuselage);
+
+        // ── Motor (nariz, -Z) ─────────────────────────────────────────────
+        const engine = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.22), this._matEngine);
+        engine.position.set(0, 0, -0.76);
+        this.mesh.add(engine);
+
+        // ── Asas principais ───────────────────────────────────────────────
+        const wings = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.06, 0.38), this._matBody);
+        wings.position.set(0, 0.06, 0.1);
+        this.mesh.add(wings);
+
+        // ── Estabilizador vertical (cauda) ────────────────────────────────
+        const tailV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.27, 0.2), this._matBody);
+        tailV.position.set(0, 0.22, 0.57);
+        this.mesh.add(tailV);
+
+        // ── Estabilizador horizontal (cauda) ──────────────────────────────
+        const tailH = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.17), this._matBody);
+        tailH.position.set(0, 0.08, 0.57);
+        this.mesh.add(tailH);
+
+        // ── Para-brisa ────────────────────────────────────────────────────
+        const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.07), this._matGlass);
+        windshield.position.set(0, 0.26, -0.18);
+        this.mesh.add(windshield);
+
+        // ── Hélice (grupo que gira) ────────────────────────────────────────
+        this._propGroup = new THREE.Object3D();
+        this._propGroup.position.set(0, 0, -0.9);
+
+        const hub = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), this._matProp);
+        this._propGroup.add(hub);
+
+        const bladeGeo = new THREE.BoxGeometry(0.06, 0.72, 0.08);
+        const blade1   = new THREE.Mesh(bladeGeo, this._matBlade);
+        this._propGroup.add(blade1);
+        const blade2   = new THREE.Mesh(bladeGeo, this._matBlade);
+        blade2.rotation.z = Math.PI / 2;
+        this._propGroup.add(blade2);
+
+        this.mesh.add(this._propGroup);
+
         scene.add(this.mesh);
     }
 
-    moverParaMenu() { this.mesh.position.set(0, -2, 0); this._mat.color.setHex(0xff0000); }
-    moverParaJogo() { this.mesh.position.set(0, -2, 0); this._mat.color.setHex(0xff0000); }
+    _resetar() {
+        this.mesh.position.set(0, -2, 0);
+        this.mesh.rotation.set(0, 0, 0);
+        this._matBody.color.setHex(0xcc2200);
+    }
+
+    moverParaMenu() { this._resetar(); }
+    moverParaJogo() { this._resetar(); }
 
     atualizarCor(tipoPowerup) {
         const cores = {
-            forma_velocidade: 0x9900ff,   // roxo
-            forma_pontos:     0x222222,   // preto
-            forma_chance:     0x22cc22,   // verde
+            forma_velocidade: 0x9900ff,
+            forma_pontos:     0x111111,
+            forma_chance:     0x22cc22,
         };
-        this._mat.color.setHex(cores[tipoPowerup] || 0xff0000);
+        this._matBody.color.setHex(cores[tipoPowerup] || 0xcc2200);
     }
 
     processarInput(input, velocidadeMulti = 1) {
         const vel = 0.1 * velocidadeMulti;
         const pos = this.mesh.position;
+
+        // Inclinação visual suave proporcional ao movimento
+        const alvoZ = input.Esquerda ? 0.4 : (input.Direita ? -0.4 : 0);
+        const alvoX = input.Cima    ? -0.18 : (input.Baixo ? 0.18 : 0);
+        this.mesh.rotation.z += (alvoZ - this.mesh.rotation.z) * 0.12;
+        this.mesh.rotation.x += (alvoX - this.mesh.rotation.x) * 0.12;
 
         if (input.Esquerda) pos.x -= vel;
         if (input.Direita)  pos.x += vel;
@@ -195,6 +263,16 @@ class Player {
         if (input.Baixo)    pos.y -= vel;
         pos.x = Math.max(Math.min(pos.x, 4), -4);
         pos.y = Math.max(Math.min(pos.y, 3), -3);
+    }
+
+    atualizar() {
+        this._propGroup.rotation.z += 0.28; // hélice girando
+    }
+
+    destruir() {
+        [this._matBody, this._matEngine, this._matProp, this._matBlade, this._matGlass]
+            .forEach(m => m.dispose());
+        this._scene.remove(this.mesh);
     }
 
     get posX() { return this.mesh.position.x; }
@@ -526,8 +604,8 @@ class Game {
         this._input    = new InputManager();
         this._hud      = new HUD();
         this._ranking  = new RankingManager(5);
-        this._player   = new Player(this._scene.scene);
-        this._pool     = new ArcoPool(this._scene.scene, ARCOS_NO_POOL);
+        this._player     = new Player(this._scene.scene);
+        this._pool       = new ArcoPool(this._scene.scene, ARCOS_NO_POOL);
         this._particulas = new ParticleSystem(this._scene.scene);
 
         this._telas = {
@@ -665,6 +743,7 @@ class Game {
 
             this._player.processarInput(this._input.estado, this._powerup.velocidadeMulti);
             this._player.atualizarCor(this._powerup.tipo);
+            this._player.atualizar();
             this._particulas.atualizar(delta);
 
             const resultado = this._pool.atualizar(
