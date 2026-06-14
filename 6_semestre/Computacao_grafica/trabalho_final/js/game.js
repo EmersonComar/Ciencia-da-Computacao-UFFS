@@ -6,18 +6,24 @@ const RAIO_EXTERNO_ARCO  = 1.6;
 const ALTURA_CUBO_FALHA   = 0.4;
 const COMPRIMENTO_CUBO_FALHA = 1.4;
 const PROFUNDIDADE_CUBO_FALHA = 0.2;
-const CHANCE_OBSTACULO = 0.2;
-const CHANCE_MAXIMA_OBSTACULO = 0.5;
+const CHANCE_OBSTACULO        = 0.1;
+const CHANCE_MAXIMA_OBSTACULO = 0.3;
+const CHANCE_POWERUP          = 0.12; // 12% de chance de spawnar power-up
 
-
-const ARCOS_NO_POOL      = 6;
+const ARCOS_NO_POOL      = 8;  // aumentado para acomodar power-ups no pool
 const LIMITE_DISPERSAO   = 3;
 const RANKING_KEY        = 'radarcos';
 
-const VELOCIDADE_INICIAL  = 0.18; 
-const VELOCIDADE_MAXIMA   = 0.55;  
-const TEMPO_ESCALA        = 90000; 
-const NIVEL_INICIAL       = 1.0;   
+const VELOCIDADE_INICIAL  = 0.18;
+const VELOCIDADE_MAXIMA   = 0.55;
+const TEMPO_ESCALA        = 90000;
+const NIVEL_INICIAL       = 1.0;
+
+// Duração dos power-ups temporários (ms)
+const DURACAO_INVENCIVEL  = 5000;
+const DURACAO_MULTI       = 8000;
+const MULTI_VALOR         = 3;    // multiplicador de pontos
+const VIDAS_INICIAIS      = 1;   
 
 class InputManager {
     constructor() {
@@ -52,8 +58,12 @@ class InputManager {
 
 class HUD {
     constructor() {
-        this._elHUD = document.getElementById('hud');
-        this._elPontos = document.getElementById('hud-pontos');
+        this._elHUD        = document.getElementById('hud');
+        this._elPontos     = document.getElementById('hud-pontos');
+        this._elVidas      = document.getElementById('hud-vidas');
+        this._elPowerup    = document.getElementById('hud-powerup');
+        this._elPUNome     = document.getElementById('hud-powerup-nome');
+        this._elPUTempo    = document.getElementById('hud-powerup-tempo');
     }
 
     mostrar(visivel) {
@@ -62,6 +72,20 @@ class HUD {
 
     atualizar(pontos) {
         this._elPontos.textContent = pontos;
+    }
+
+    atualizarVidas(vidas) {
+        this._elVidas.textContent = '❤️'.repeat(Math.max(0, vidas));
+    }
+
+    atualizarPowerup(nome, tempoRestanteMs) {
+        if (!nome) {
+            this._elPowerup.style.display = 'none';
+            return;
+        }
+        this._elPowerup.style.display = 'inline';
+        this._elPUNome.textContent     = nome;
+        this._elPUTempo.textContent    = Math.ceil(tempoRestanteMs / 1000);
     }
 }
 
@@ -173,6 +197,40 @@ class Player {
     get posZ() { return this.mesh.position.z; }
 }
 
+// =============================================================================
+// PowerUpManager — controla o power-up ativo e seu tempo restante
+// =============================================================================
+class PowerUpManager {
+    constructor() {
+        this.tipo          = null;  // null | 'vida' | 'invencivel' | 'multi'
+        this.tempoRestante = 0;
+    }
+
+    /** Ativa um power-up. Se já houver um ativo, substitui. */
+    ativar(tipo) {
+        this.tipo = tipo;
+        if (tipo === 'invencivel') this.tempoRestante = DURACAO_INVENCIVEL;
+        else if (tipo === 'multi') this.tempoRestante = DURACAO_MULTI;
+        else this.tempoRestante = 0; // 'vida' é instantâneo, sem duração
+    }
+
+    /** Avança o timer. Retorna true se o power-up expirou neste tick. */
+    tick(deltams) {
+        if (!this.tipo || this.tipo === 'vida') return false;
+        this.tempoRestante -= deltams;
+        if (this.tempoRestante <= 0) {
+            this.tipo          = null;
+            this.tempoRestante = 0;
+            return true; // expirou
+        }
+        return false;
+    }
+
+    get ativo() { return this.tipo !== null; }
+    get invencivel() { return this.tipo === 'invencivel'; }
+    get multiplicador() { return this.tipo === 'multi' ? MULTI_VALOR : 1; }
+}
+
 class ArcoPool {
     constructor(scene, tamanho) {
         this._scene = scene;
@@ -189,9 +247,17 @@ class ArcoPool {
             PROFUNDIDADE_CUBO_FALHA
         );
 
-        this._matAzul = new THREE.MeshStandardMaterial({ color: 0x00aaff });
-        this._matVerde = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        this._matAzul     = new THREE.MeshStandardMaterial({ color: 0x00aaff });
+        this._matVerde    = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
         this._matVermelho = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        // Materiais dos power-ups
+        this._matVida     = new THREE.MeshStandardMaterial({ color: 0x00ff88 });
+        this._matInvenc   = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
+        this._matMulti    = new THREE.MeshStandardMaterial({ color: 0xcc00ff });
+        // Geometrias dos power-ups (formas distintas)
+        this._geoVida     = new THREE.OctahedronGeometry(0.5);
+        this._geoInvenc   = new THREE.DodecahedronGeometry(0.45);
+        this._geoMulti    = new THREE.TetrahedronGeometry(0.55);
 
         this._pool = [];
         for (let i = 0; i < tamanho; i++) {
@@ -205,12 +271,39 @@ class ArcoPool {
         this._ativos = [];
     }
 
+    // Mapeia tipo → geometria e material
+    _geoParaTipo(tipo) {
+        if (tipo === 'falha')     return this._geoFalha;
+        if (tipo === 'vida')      return this._geoVida;
+        if (tipo === 'invencivel') return this._geoInvenc;
+        if (tipo === 'multi')     return this._geoMulti;
+        return this._geo;
+    }
+    _matParaTipo(tipo) {
+        if (tipo === 'falha')     return this._matVermelho;
+        if (tipo === 'vida')      return this._matVida;
+        if (tipo === 'invencivel') return this._matInvenc;
+        if (tipo === 'multi')     return this._matMulti;
+        return this._matAzul;
+    }
+
     ativar(posZ, nivelDificuldade) {
         const mesh = this._pool.find(m => !m.userData.ativo);
         if (!mesh) return;
 
+        // Sorteia o tipo: power-up > obstáculo > arco (em ordem de prioridade)
+        const r = Math.random();
         const chanceObstaculo = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
-        const tipo = Math.random() < chanceObstaculo ? 'falha' : 'arco';
+        let tipo;
+        if (r < CHANCE_POWERUP) {
+            // Sorteia qual power-up: 40% vida, 30% invencível, 30% multi
+            const rPU = Math.random();
+            tipo = rPU < 0.4 ? 'vida' : rPU < 0.7 ? 'invencivel' : 'multi';
+        } else if (r < CHANCE_POWERUP + chanceObstaculo) {
+            tipo = 'falha';
+        } else {
+            tipo = 'arco';
+        }
 
         const maxDisp = Math.min(LIMITE_DISPERSAO, 1 + nivelDificuldade * 0.4);
         mesh.position.set(
@@ -219,12 +312,16 @@ class ArcoPool {
             posZ
         );
 
-        mesh.geometry            = tipo === 'arco' ? this._geo : this._geoFalha;
-        mesh.material            = tipo === 'arco' ? this._matAzul : this._matVermelho;
-        mesh.userData.tipo       = tipo;
-        mesh.userData.ativo      = true;
-        mesh.userData.passou     = false;
-        mesh.visible             = true;
+        // Reseta rotação — meshes reutilizados do pool podem ter rotação
+        // acumulada de quando eram power-ups girando a cada frame
+        mesh.rotation.set(0, 0, 0);
+
+        mesh.geometry        = this._geoParaTipo(tipo);
+        mesh.material        = this._matParaTipo(tipo);
+        mesh.userData.tipo   = tipo;
+        mesh.userData.ativo  = true;
+        mesh.userData.passou = false;
+        mesh.visible         = true;
         this._ativos.push(mesh);
     }
 
@@ -240,17 +337,22 @@ class ArcoPool {
         [...this._ativos].forEach(m => this._desativar(m));
     }
 
-    atualizar(velocidadeZ, player, nivelDificuldade) {
+    atualizar(velocidadeZ, player, nivelDificuldade, powerup) {
         let resultado = null;
 
         for (let i = this._ativos.length - 1; i >= 0; i--) {
             const obj = this._ativos[i];
             obj.position.z += velocidadeZ;
+            // Rotaciona power-ups para destaque visual
+            if (obj.userData.tipo !== 'arco' && obj.userData.tipo !== 'falha') {
+                obj.rotation.y += 0.04;
+                obj.rotation.x += 0.02;
+            }
 
             if (!obj.userData.passou && obj.position.z >= player.posZ) {
+                const tipo = obj.userData.tipo;
 
-                if (obj.userData.tipo === 'arco') {
-                    // --- Colisão circular 2D para o arco ---
+                if (tipo === 'arco') {
                     const dx   = player.posX - obj.position.x;
                     const dy   = player.posY - obj.position.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
@@ -260,25 +362,44 @@ class ArcoPool {
                         obj.material        = this._matVerde;
                         resultado           = 'SUCESSO';
                     } else if (dist <= RAIO_EXTERNO_ARCO + RAIO_BOLA) {
-                        return 'GAMEOVER';
+                        if (powerup && powerup.invencivel) {
+                            // Invencível: trata colisão no aro como sucesso
+                            obj.userData.passou = true;
+                            obj.material        = this._matVerde;
+                            resultado           = 'SUCESSO';
+                        } else {
+                            obj.userData.passou = true; // evita re-colisão nos frames seguintes
+                            return 'GAMEOVER';
+                        }
                     }
 
-                } else {
-                    // --- Colisão AABB (caixa) para o obstáculo vermelho ---
-                    // Verifica sobreposição nos eixos X e Y com margem do raio da bola
+                } else if (tipo === 'falha') {
                     const metadeLargura = COMPRIMENTO_CUBO_FALHA / 2 + RAIO_BOLA;
-                    const metadeAltura  = ALTURA_CUBO_FALHA   / 2 + RAIO_BOLA;
-
+                    const metadeAltura  = ALTURA_CUBO_FALHA / 2 + RAIO_BOLA;
                     const colidiu =
                         Math.abs(player.posX - obj.position.x) < metadeLargura &&
                         Math.abs(player.posY - obj.position.y) < metadeAltura;
 
                     if (colidiu) {
-                        return 'GAMEOVER';
+                        if (powerup && powerup.invencivel) {
+                            obj.userData.passou = true; // invencível desvia automaticamente
+                        } else {
+                            obj.userData.passou = true; // evita re-colisão nos frames seguintes
+                            return 'GAMEOVER';
+                        }
+                    } else {
+                        obj.userData.passou = true;
                     }
 
-                    // Passou sem colidir — conta como desvio bem-sucedido
-                    obj.userData.passou = true;
+                } else {
+                    // Power-up: colisão por esfera simples
+                    const dx   = player.posX - obj.position.x;
+                    const dy   = player.posY - obj.position.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist <= RAIO_BOLA + 0.6) {
+                        obj.userData.passou = true;
+                        resultado = { powerup: tipo };
+                    }
                 }
             }
 
@@ -300,11 +421,10 @@ class ArcoPool {
     }
 
     destruir() {
-        this._geo.dispose();
-        this._geoFalha.dispose();
-        this._matAzul.dispose();
-        this._matVerde.dispose();
-        this._matVermelho.dispose();
+        this._geo.dispose();     this._geoFalha.dispose();
+        this._geoVida.dispose(); this._geoInvenc.dispose(); this._geoMulti.dispose();
+        this._matAzul.dispose();    this._matVerde.dispose();   this._matVermelho.dispose();
+        this._matVida.dispose();    this._matInvenc.dispose();  this._matMulti.dispose();
     }
 }
 
@@ -334,11 +454,13 @@ class Game {
         document.getElementById('btn-voltar-menu').addEventListener('click', () => this.mudarEstado('MENU'));
         document.getElementById('btn-limpar-ranking').addEventListener('click', () => this._limparRanking());
 
-        this._estado = null;
-        this._pontos = 0;
-        this._velocidadeZ = 0.3;
+        this._estado           = null;
+        this._pontos           = 0;
+        this._velocidadeZ      = 0.3;
         this._nivelDificuldade = 1;
-        this._tempoDecorrido = 0;
+        this._tempoDecorrido   = 0;
+        this._vidas            = VIDAS_INICIAIS;
+        this._powerup          = new PowerUpManager();
 
         this.mudarEstado('MENU');
         this._loop();
@@ -374,16 +496,19 @@ class Game {
     }
 
     _iniciarNovaPartida() {
-        this._pontos              = 0;
-        this._velocidadeZ         = VELOCIDADE_INICIAL;
-        this._nivelDificuldade    = NIVEL_INICIAL;
-        this._tempoDecorrido      = 0;
+        this._pontos           = 0;
+        this._velocidadeZ      = VELOCIDADE_INICIAL;
+        this._nivelDificuldade = NIVEL_INICIAL;
+        this._tempoDecorrido   = 0;
+        this._vidas            = VIDAS_INICIAIS;
+        this._powerup          = new PowerUpManager();
 
         this._player.moverParaJogo();
         this._hud.atualizar(this._pontos);
+        this._hud.atualizarVidas(this._vidas);
+        this._hud.atualizarPowerup(null, 0);
 
         this._pool.desativarTodos();
-        // Espaçamento fixo de 30 unidades entre arcos iniciais
         for (let i = 0; i < 4; i++) {
             this._pool.ativar(-20 - i * 30, NIVEL_INICIAL);
         }
@@ -402,32 +527,54 @@ class Game {
         this.mudarEstado('MENU');
     }
 
+    _aplicarPowerup(tipo) {
+        if (tipo === 'vida') {
+            this._vidas++;
+            this._hud.atualizarVidas(this._vidas);
+        } else {
+            // Invencibilidade ou multiplicador — apenas um ativo por vez
+            this._powerup.ativar(tipo);
+            const nomes = { invencivel: '⚡ Invencível', multi: `✖️ x${MULTI_VALOR}` };
+            this._hud.atualizarPowerup(nomes[tipo], this._powerup.tempoRestante);
+        }
+    }
+
     _loop() {
         requestAnimationFrame(() => this._loop());
 
         if (this._estado === 'JOGANDO') {
-            this._tempoDecorrido   += 16.66;
+            const delta = 16.66;
+            this._tempoDecorrido   += delta;
+            this._nivelDificuldade  = NIVEL_INICIAL + this._tempoDecorrido / TEMPO_ESCALA;
+            this._velocidadeZ       = Math.min(VELOCIDADE_INICIAL * this._nivelDificuldade, VELOCIDADE_MAXIMA);
 
-            // Curva de dificuldade suave:
-            //   t=0s  → nível 1.00 → vel 0.18 u/frame
-            //   t=30s → nível 1.33 → vel 0.24 u/frame
-            //   t=60s → nível 1.67 → vel 0.30 u/frame
-            //   t=90s → nível 2.00 → vel 0.36 u/frame (cap: 0.55)
-            this._nivelDificuldade = NIVEL_INICIAL + this._tempoDecorrido / TEMPO_ESCALA;
-            this._velocidadeZ      = Math.min(
-                VELOCIDADE_INICIAL * this._nivelDificuldade,
-                VELOCIDADE_MAXIMA
-            );
+            // Tick do power-up ativo
+            const expirou = this._powerup.tick(delta);
+            if (expirou) {
+                this._hud.atualizarPowerup(null, 0);
+            } else if (this._powerup.ativo) {
+                const nomes = { invencivel: '⚡ Invencível', multi: `✖️ x${MULTI_VALOR}` };
+                this._hud.atualizarPowerup(nomes[this._powerup.tipo], this._powerup.tempoRestante);
+            }
 
             this._player.processarInput(this._input.estado);
 
-            const resultado = this._pool.atualizar(this._velocidadeZ, this._player, this._nivelDificuldade);
+            const resultado = this._pool.atualizar(
+                this._velocidadeZ, this._player, this._nivelDificuldade, this._powerup
+            );
 
             if (resultado === 'SUCESSO') {
-                this._pontos += 1;
+                this._pontos += 1 * this._powerup.multiplicador;
                 this._hud.atualizar(this._pontos);
+            } else if (resultado && resultado.powerup) {
+                this._aplicarPowerup(resultado.powerup);
             } else if (resultado === 'GAMEOVER') {
-                this.mudarEstado('GAMEOVER');
+                this._vidas--;
+                this._hud.atualizarVidas(this._vidas);
+                if (this._vidas <= 0) {
+                    this.mudarEstado('GAMEOVER');
+                }
+                // Se ainda tem vidas, o jogo continua
             }
         }
 
