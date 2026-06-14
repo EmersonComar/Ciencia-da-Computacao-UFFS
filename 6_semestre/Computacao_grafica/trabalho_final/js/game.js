@@ -2,6 +2,14 @@
 const RAIO_BOLA          = 0.4;
 const RAIO_INTERNO_ARCO  = 1.2;
 const RAIO_EXTERNO_ARCO  = 1.6;
+
+const ALTURA_CUBO_FALHA   = 0.4;
+const COMPRIMENTO_CUBO_FALHA = 1.4;
+const PROFUNDIDADE_CUBO_FALHA = 0.2;
+const CHANCE_OBSTACULO = 0.2;
+const CHANCE_MAXIMA_OBSTACULO = 0.5;
+
+
 const ARCOS_NO_POOL      = 6;
 const LIMITE_DISPERSAO   = 3;
 const RANKING_KEY        = 'radarcos';
@@ -174,14 +182,22 @@ class ArcoPool {
             (RAIO_EXTERNO_ARCO - RAIO_INTERNO_ARCO) / 2,
             8, 24
         );
+
+        this._geoFalha = new THREE.BoxGeometry(
+            COMPRIMENTO_CUBO_FALHA,
+            ALTURA_CUBO_FALHA,
+            PROFUNDIDADE_CUBO_FALHA
+        );
+
         this._matAzul = new THREE.MeshStandardMaterial({ color: 0x00aaff });
         this._matVerde = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+        this._matVermelho = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 
         this._pool = [];
         for (let i = 0; i < tamanho; i++) {
             const mesh = new THREE.Mesh(this._geo, this._matAzul);
             mesh.visible = false;
-            mesh.userData = { ativo: false, passou: false };
+            mesh.userData = { ativo: false, passou: false, tipo: 'arco' };
             scene.add(mesh);
             this._pool.push(mesh);
         }
@@ -193,16 +209,22 @@ class ArcoPool {
         const mesh = this._pool.find(m => !m.userData.ativo);
         if (!mesh) return;
 
+        const chanceObstaculo = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
+        const tipo = Math.random() < chanceObstaculo ? 'falha' : 'arco';
+
         const maxDisp = Math.min(LIMITE_DISPERSAO, 1 + nivelDificuldade * 0.4);
         mesh.position.set(
             (Math.random() - 0.5) * maxDisp * 2,
             (Math.random() - 0.5) * maxDisp * 2,
             posZ
         );
-        mesh.material = this._matAzul;
-        mesh.userData.ativo = true;
-        mesh.userData.passou = false;
-        mesh.visible = true;
+
+        mesh.geometry            = tipo === 'arco' ? this._geo : this._geoFalha;
+        mesh.material            = tipo === 'arco' ? this._matAzul : this._matVermelho;
+        mesh.userData.tipo       = tipo;
+        mesh.userData.ativo      = true;
+        mesh.userData.passou     = false;
+        mesh.visible             = true;
         this._ativos.push(mesh);
     }
 
@@ -222,28 +244,46 @@ class ArcoPool {
         let resultado = null;
 
         for (let i = this._ativos.length - 1; i >= 0; i--) {
-            const arco = this._ativos[i];
-            arco.position.z += velocidadeZ;
-            if (!arco.userData.passou && arco.position.z >= player.posZ) {
-                const dx = player.posX - arco.position.x;
-                const dy = player.posY - arco.position.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+            const obj = this._ativos[i];
+            obj.position.z += velocidadeZ;
 
-                const limiteSucesso = RAIO_INTERNO_ARCO - RAIO_BOLA;
-                const limiteFalhaExt = RAIO_EXTERNO_ARCO + RAIO_BOLA;
+            if (!obj.userData.passou && obj.position.z >= player.posZ) {
 
-                if (dist <= limiteSucesso) {
-                    arco.userData.passou = true;
-                    arco.material = this._matVerde;
-                    resultado = 'SUCESSO';
-                } else if (dist <= limiteFalhaExt) {
-                    resultado = 'GAMEOVER';
-                    return resultado;
+                if (obj.userData.tipo === 'arco') {
+                    // --- Colisão circular 2D para o arco ---
+                    const dx   = player.posX - obj.position.x;
+                    const dy   = player.posY - obj.position.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist <= RAIO_INTERNO_ARCO - RAIO_BOLA) {
+                        obj.userData.passou = true;
+                        obj.material        = this._matVerde;
+                        resultado           = 'SUCESSO';
+                    } else if (dist <= RAIO_EXTERNO_ARCO + RAIO_BOLA) {
+                        return 'GAMEOVER';
+                    }
+
+                } else {
+                    // --- Colisão AABB (caixa) para o obstáculo vermelho ---
+                    // Verifica sobreposição nos eixos X e Y com margem do raio da bola
+                    const metadeLargura = COMPRIMENTO_CUBO_FALHA / 2 + RAIO_BOLA;
+                    const metadeAltura  = ALTURA_CUBO_FALHA   / 2 + RAIO_BOLA;
+
+                    const colidiu =
+                        Math.abs(player.posX - obj.position.x) < metadeLargura &&
+                        Math.abs(player.posY - obj.position.y) < metadeAltura;
+
+                    if (colidiu) {
+                        return 'GAMEOVER';
+                    }
+
+                    // Passou sem colidir — conta como desvio bem-sucedido
+                    obj.userData.passou = true;
                 }
             }
 
-            if (arco.position.z > 5) {
-                this._desativar(arco);
+            if (obj.position.z > 5) {
+                this._desativar(obj);
                 let menorZ = 0;
                 this._ativos.forEach(a => { if (a.position.z < menorZ) menorZ = a.position.z; });
                 this.ativar(menorZ - 20, nivelDificuldade);
@@ -261,8 +301,10 @@ class ArcoPool {
 
     destruir() {
         this._geo.dispose();
+        this._geoFalha.dispose();
         this._matAzul.dispose();
         this._matVerde.dispose();
+        this._matVermelho.dispose();
     }
 }
 
