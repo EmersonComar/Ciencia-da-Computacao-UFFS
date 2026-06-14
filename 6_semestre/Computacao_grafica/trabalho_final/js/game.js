@@ -21,8 +21,10 @@ const NIVEL_INICIAL       = 1.0;
 
 const DURACAO_INVENCIVEL  = 5000;
 const DURACAO_MULTI       = 8000;
-const MULTI_VALOR         = 3;    
-const VIDAS_INICIAIS      = 1;   
+const DURACAO_FORMA       = 8000;  // duração dos power-ups de transformação
+const MULTI_VALOR         = 3;
+const VIDAS_INICIAIS      = 1;
+const CHANCE_FORMA        = 0.04;  // 4% total — ~1,3% por tipo (baixissímo)   
 
 class InputManager {
     constructor() {
@@ -165,28 +167,32 @@ class SceneManager {
 
 class Player {
     constructor(scene) {
-        const geo = new THREE.SphereGeometry(RAIO_BOLA, 16, 16);
-        const mat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        this.mesh = new THREE.Mesh(geo, mat);
+        const geo    = new THREE.SphereGeometry(RAIO_BOLA, 16, 16);
+        this._mat    = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        this.mesh    = new THREE.Mesh(geo, this._mat);
         scene.add(this.mesh);
     }
 
-    moverParaMenu() {
-        this.mesh.position.set(0, -2, 0);
+    moverParaMenu() { this.mesh.position.set(0, -2, 0); this._mat.color.setHex(0xff0000); }
+    moverParaJogo() { this.mesh.position.set(0, -2, 0); this._mat.color.setHex(0xff0000); }
+
+    atualizarCor(tipoPowerup) {
+        const cores = {
+            forma_velocidade: 0x9900ff,   // roxo
+            forma_pontos:     0x222222,   // preto
+            forma_chance:     0x22cc22,   // verde
+        };
+        this._mat.color.setHex(cores[tipoPowerup] || 0xff0000);
     }
 
-    moverParaJogo() {
-        this.mesh.position.set(0, -2, 0);
-    }
-
-    processarInput(input) {
-        const vel = 0.1;
+    processarInput(input, velocidadeMulti = 1) {
+        const vel = 0.1 * velocidadeMulti;
         const pos = this.mesh.position;
 
         if (input.Esquerda) pos.x -= vel;
-        if (input.Direita) pos.x += vel;
-        if (input.Cima) pos.y += vel;
-        if (input.Baixo) pos.y -= vel;
+        if (input.Direita)  pos.x += vel;
+        if (input.Cima)     pos.y += vel;
+        if (input.Baixo)    pos.y -= vel;
         pos.x = Math.max(Math.min(pos.x, 4), -4);
         pos.y = Math.max(Math.min(pos.y, 3), -3);
     }
@@ -204,9 +210,10 @@ class PowerUpManager {
 
     ativar(tipo) {
         this.tipo = tipo;
-        if (tipo === 'invencivel') this.tempoRestante = DURACAO_INVENCIVEL;
-        else if (tipo === 'multi') this.tempoRestante = DURACAO_MULTI;
-        else this.tempoRestante = 0; 
+        if (tipo === 'invencivel')              this.tempoRestante = DURACAO_INVENCIVEL;
+        else if (tipo === 'multi')              this.tempoRestante = DURACAO_MULTI;
+        else if (tipo.startsWith('forma'))      this.tempoRestante = DURACAO_FORMA;
+        else                                    this.tempoRestante = 0;
     }
 
     tick(deltams) {
@@ -215,14 +222,17 @@ class PowerUpManager {
         if (this.tempoRestante <= 0) {
             this.tipo          = null;
             this.tempoRestante = 0;
-            return true; 
+            return true;
         }
         return false;
     }
 
-    get ativo() { return this.tipo !== null; }
-    get invencivel() { return this.tipo === 'invencivel'; }
-    get multiplicador() { return this.tipo === 'multi' ? MULTI_VALOR : 1; }
+    get ativo()           { return this.tipo !== null; }
+    get invencivel()      { return this.tipo === 'invencivel'; }
+    get multiplicador()   { return this.tipo === 'multi' ? MULTI_VALOR : 1; }
+    get velocidadeMulti() { return this.tipo === 'forma_velocidade' ? 3 : 1; }
+    get pontosBase()      { return this.tipo === 'forma_pontos'     ? 2 : 1; }
+    get chanceBonus()     { return this.tipo === 'forma_chance'     ? 0.15 : 0; }
 }
 
 class ArcoPool {
@@ -248,10 +258,16 @@ class ArcoPool {
         this._matVida     = new THREE.MeshStandardMaterial({ color: 0x00ff88 });
         this._matInvenc   = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
         this._matMulti    = new THREE.MeshStandardMaterial({ color: 0xcc00ff });
+        // Materiais e geometria dos power-ups de transformação (esfera = transforma o player)
+        this._geoForma    = new THREE.SphereGeometry(0.45, 12, 12);
+        this._matFVel     = new THREE.MeshStandardMaterial({ color: 0x9900ff }); // roxo
+        this._matFPts     = new THREE.MeshStandardMaterial({ color: 0x222222 }); // preto
+        this._matFChc     = new THREE.MeshStandardMaterial({ color: 0x22cc22 }); // verde
 
         this._geoVida     = new THREE.OctahedronGeometry(0.5);
         this._geoInvenc   = new THREE.DodecahedronGeometry(0.45);
         this._geoMulti    = new THREE.TetrahedronGeometry(0.55);
+
 
         this._pool = [];
         for (let i = 0; i < tamanho; i++) {
@@ -266,31 +282,42 @@ class ArcoPool {
     }
 
     _geoParaTipo(tipo) {
-        if (tipo === 'falha')     return this._geoFalha;
-        if (tipo === 'vida')      return this._geoVida;
-        if (tipo === 'invencivel') return this._geoInvenc;
-        if (tipo === 'multi')     return this._geoMulti;
+        if (tipo === 'falha')            return this._geoFalha;
+        if (tipo === 'vida')             return this._geoVida;
+        if (tipo === 'invencivel')       return this._geoInvenc;
+        if (tipo === 'multi')            return this._geoMulti;
+        if (tipo.startsWith('forma'))    return this._geoForma;
         return this._geo;
     }
     _matParaTipo(tipo) {
-        if (tipo === 'falha')     return this._matVermelho;
-        if (tipo === 'vida')      return this._matVida;
-        if (tipo === 'invencivel') return this._matInvenc;
-        if (tipo === 'multi')     return this._matMulti;
+        if (tipo === 'falha')             return this._matVermelho;
+        if (tipo === 'vida')             return this._matVida;
+        if (tipo === 'invencivel')       return this._matInvenc;
+        if (tipo === 'multi')            return this._matMulti;
+        if (tipo === 'forma_velocidade') return this._matFVel;
+        if (tipo === 'forma_pontos')     return this._matFPts;
+        if (tipo === 'forma_chance')     return this._matFChc;
         return this._matAzul;
     }
 
-    ativar(posZ, nivelDificuldade) {
+    ativar(posZ, nivelDificuldade, powerup = null) {
         const mesh = this._pool.find(m => !m.userData.ativo);
         if (!mesh) return;
 
-        const r = Math.random();
-        const chanceObstaculo = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
+        const r             = Math.random();
+        const chanceBonus   = powerup ? powerup.chanceBonus : 0;
+        const chanceObst    = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
         let tipo;
-        if (r < CHANCE_POWERUP) {
+
+        if (r < CHANCE_FORMA) {
+            // Power-up de transformação — chance baixissíma (~1,3% cada)
+            const rF = Math.random();
+            tipo = rF < 0.33 ? 'forma_velocidade' : rF < 0.66 ? 'forma_pontos' : 'forma_chance';
+        } else if (r < CHANCE_FORMA + CHANCE_POWERUP + chanceBonus) {
+            // Power-up normal (bola verde aumenta esta faixa)
             const rPU = Math.random();
             tipo = rPU < 0.4 ? 'vida' : rPU < 0.7 ? 'invencivel' : 'multi';
-        } else if (r < CHANCE_POWERUP + chanceObstaculo) {
+        } else if (r < CHANCE_FORMA + CHANCE_POWERUP + chanceBonus + chanceObst) {
             tipo = 'falha';
         } else {
             tipo = 'arco';
@@ -388,7 +415,7 @@ class ArcoPool {
                         this._desativar(obj);
                         let menorZ = 0;
                         this._ativos.forEach(a => { if (a.position.z < menorZ) menorZ = a.position.z; });
-                        this.ativar(menorZ - 20, nivelDificuldade);
+                        this.ativar(menorZ - 20, nivelDificuldade, powerup);
                     }
                 }
             }
@@ -397,7 +424,7 @@ class ArcoPool {
                 this._desativar(obj);
                 let menorZ = 0;
                 this._ativos.forEach(a => { if (a.position.z < menorZ) menorZ = a.position.z; });
-                this.ativar(menorZ - 20, nivelDificuldade);
+                this.ativar(menorZ - 20, nivelDificuldade, powerup);
             }
         }
 
@@ -413,14 +440,19 @@ class ArcoPool {
     destruir() {
         this._geo.dispose();     this._geoFalha.dispose();
         this._geoVida.dispose(); this._geoInvenc.dispose(); this._geoMulti.dispose();
+        this._geoForma.dispose();
         this._matAzul.dispose();    this._matVerde.dispose();   this._matVermelho.dispose();
         this._matVida.dispose();    this._matInvenc.dispose();  this._matMulti.dispose();
+        this._matFVel.dispose();    this._matFPts.dispose();    this._matFChc.dispose();
     }
 }
 
 
 class ParticleSystem {
-    static CORES = { vida: 0x00ff88, invencivel: 0xffcc00, multi: 0xcc00ff };
+    static CORES = {
+        vida: 0x00ff88, invencivel: 0xffcc00, multi: 0xcc00ff,
+        forma_velocidade: 0x9900ff, forma_pontos: 0x888888, forma_chance: 0x22cc22,
+    };
 
     constructor(scene) {
         this._scene     = scene;
@@ -590,7 +622,6 @@ class Game {
     }
 
     _aplicarPowerup(tipo, posicao) {
-        // Dispara explosão de partículas na posição de coleta
         if (posicao) this._particulas.explodir(posicao, tipo);
 
         if (tipo === 'vida') {
@@ -598,8 +629,14 @@ class Game {
             this._hud.atualizarVidas(this._vidas);
         } else {
             this._powerup.ativar(tipo);
-            const nomes = { invencivel: '⚡ Invencível', multi: `✖️ x${MULTI_VALOR}` };
-            this._hud.atualizarPowerup(nomes[tipo], this._powerup.tempoRestante);
+            const nomes = {
+                invencivel:       '⚡ Invencível',
+                multi:            `✖️ x${MULTI_VALOR}`,
+                forma_velocidade: '🟣 Turbo',
+                forma_pontos:     '⚫ x2 pts',
+                forma_chance:     '🟢 +Sorte',
+            };
+            this._hud.atualizarPowerup(nomes[tipo] || tipo, this._powerup.tempoRestante);
         }
     }
 
@@ -616,11 +653,18 @@ class Game {
             if (expirou) {
                 this._hud.atualizarPowerup(null, 0);
             } else if (this._powerup.ativo) {
-                const nomes = { invencivel: '⚡ Invencível', multi: `✖️ x${MULTI_VALOR}` };
-                this._hud.atualizarPowerup(nomes[this._powerup.tipo], this._powerup.tempoRestante);
+                const nomes = {
+                    invencivel:       '⚡ Invencível',
+                    multi:            `✖️ x${MULTI_VALOR}`,
+                    forma_velocidade: '🟣 Turbo',
+                    forma_pontos:     '⚫ x2 pts',
+                    forma_chance:     '🟢 +Sorte',
+                };
+                this._hud.atualizarPowerup(nomes[this._powerup.tipo] || '', this._powerup.tempoRestante);
             }
 
-            this._player.processarInput(this._input.estado);
+            this._player.processarInput(this._input.estado, this._powerup.velocidadeMulti);
+            this._player.atualizarCor(this._powerup.tipo);
             this._particulas.atualizar(delta);
 
             const resultado = this._pool.atualizar(
@@ -628,7 +672,7 @@ class Game {
             );
 
             if (resultado === 'SUCESSO') {
-                this._pontos += 1 * this._powerup.multiplicador;
+                this._pontos += this._powerup.pontosBase * this._powerup.multiplicador;
                 this._hud.atualizar(this._pontos);
             } else if (resultado && resultado.powerup) {
                 this._aplicarPowerup(resultado.powerup, resultado.posicao);
