@@ -215,7 +215,7 @@ class PowerUpManager {
         if (this.tempoRestante <= 0) {
             this.tipo          = null;
             this.tempoRestante = 0;
-            return true; // expirou
+            return true; 
         }
         return false;
     }
@@ -244,11 +244,11 @@ class ArcoPool {
         this._matAzul     = new THREE.MeshStandardMaterial({ color: 0x00aaff });
         this._matVerde    = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
         this._matVermelho = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-        // Materiais dos power-ups
+
         this._matVida     = new THREE.MeshStandardMaterial({ color: 0x00ff88 });
         this._matInvenc   = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
         this._matMulti    = new THREE.MeshStandardMaterial({ color: 0xcc00ff });
-        // Geometrias dos power-ups (formas distintas)
+
         this._geoVida     = new THREE.OctahedronGeometry(0.5);
         this._geoInvenc   = new THREE.DodecahedronGeometry(0.45);
         this._geoMulti    = new THREE.TetrahedronGeometry(0.55);
@@ -352,12 +352,11 @@ class ArcoPool {
                         resultado           = 'SUCESSO';
                     } else if (dist <= RAIO_EXTERNO_ARCO + RAIO_BOLA) {
                         if (powerup && powerup.invencivel) {
-                            // Invencível: trata colisão no aro como sucesso
                             obj.userData.passou = true;
                             obj.material        = this._matVerde;
                             resultado           = 'SUCESSO';
                         } else {
-                            obj.userData.passou = true; // evita re-colisão nos frames seguintes
+                            obj.userData.passou = true; 
                             return 'GAMEOVER';
                         }
                     }
@@ -371,9 +370,9 @@ class ArcoPool {
 
                     if (colidiu) {
                         if (powerup && powerup.invencivel) {
-                            obj.userData.passou = true; // invencível desvia automaticamente
+                            obj.userData.passou = true; 
                         } else {
-                            obj.userData.passou = true; // evita re-colisão nos frames seguintes
+                            obj.userData.passou = true; 
                             return 'GAMEOVER';
                         }
                     } else {
@@ -381,13 +380,15 @@ class ArcoPool {
                     }
 
                 } else {
-                    // Power-up: colisão por esfera simples
                     const dx   = player.posX - obj.position.x;
                     const dy   = player.posY - obj.position.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist <= RAIO_BOLA + 0.6) {
-                        obj.userData.passou = true;
-                        resultado = { powerup: tipo };
+                        resultado = { powerup: tipo, posicao: obj.position.clone() };
+                        this._desativar(obj);
+                        let menorZ = 0;
+                        this._ativos.forEach(a => { if (a.position.z < menorZ) menorZ = a.position.z; });
+                        this.ativar(menorZ - 20, nivelDificuldade);
                     }
                 }
             }
@@ -417,14 +418,85 @@ class ArcoPool {
     }
 }
 
+
+class ParticleSystem {
+    static CORES = { vida: 0x00ff88, invencivel: 0xffcc00, multi: 0xcc00ff };
+
+    constructor(scene) {
+        this._scene     = scene;
+        this._explosoes = []; 
+    }
+
+    explodir(posicao, tipoPowerup) {
+        const cor      = ParticleSystem.CORES[tipoPowerup] || 0xffffff;
+        const N        = 24;
+        const posArr   = new Float32Array(N * 3);
+        const vels     = [];
+
+        for (let i = 0; i < N; i++) {
+            posArr[i * 3]     = posicao.x;
+            posArr[i * 3 + 1] = posicao.y;
+            posArr[i * 3 + 2] = posicao.z;
+
+            vels.push(new THREE.Vector3(
+                (Math.random() - 0.5) * 0.25,
+                (Math.random() - 0.5) * 0.25,
+                (Math.random() - 0.5) * 0.15
+            ));
+        }
+
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
+
+        const mat = new THREE.PointsMaterial({
+            color:          cor,
+            size:           0.18,
+            sizeAttenuation: true,
+            transparent:    true,
+            opacity:        1.0,
+            depthWrite:     false,
+        });
+
+        const points = new THREE.Points(geo, mat);
+        this._scene.add(points);
+        this._explosoes.push({ points, geo, mat, vels, tempo: 0, duracao: 450 });
+    }
+
+    atualizar(delta) {
+        for (let i = this._explosoes.length - 1; i >= 0; i--) {
+            const exp      = this._explosoes[i];
+            exp.tempo     += delta;
+            const progresso = exp.tempo / exp.duracao; // 0 → 1
+            const arr      = exp.geo.attributes.position.array;
+
+            for (let j = 0; j < exp.vels.length; j++) {
+                arr[j * 3]     += exp.vels[j].x;
+                arr[j * 3 + 1] += exp.vels[j].y;
+                arr[j * 3 + 2] += exp.vels[j].z;
+                exp.vels[j].multiplyScalar(0.90);
+            }
+            exp.geo.attributes.position.needsUpdate = true;
+            exp.mat.opacity = Math.max(0, 1 - progresso);
+
+            if (exp.tempo >= exp.duracao) {
+                this._scene.remove(exp.points);
+                exp.geo.dispose();
+                exp.mat.dispose();
+                this._explosoes.splice(i, 1);
+            }
+        }
+    }
+}
+
 class Game {
     constructor() {
-        this._scene = new SceneManager('canvas-container');
-        this._input = new InputManager();
-        this._hud = new HUD();
-        this._ranking = new RankingManager(5);
-        this._player = new Player(this._scene.scene);
-        this._pool = new ArcoPool(this._scene.scene, ARCOS_NO_POOL);
+        this._scene    = new SceneManager('canvas-container');
+        this._input    = new InputManager();
+        this._hud      = new HUD();
+        this._ranking  = new RankingManager(5);
+        this._player   = new Player(this._scene.scene);
+        this._pool     = new ArcoPool(this._scene.scene, ARCOS_NO_POOL);
+        this._particulas = new ParticleSystem(this._scene.scene);
 
         this._telas = {
             menu: document.getElementById('menu-inicial'),
@@ -475,6 +547,7 @@ class Game {
             case 'GAMEOVER':
                 this._telas.gameOver.style.display = 'flex';
                 this._elPontosFinais.textContent = this._pontos;
+                this.desativarTodos()
                 break;
 
             case 'RANKING':
@@ -498,8 +571,8 @@ class Game {
         this._hud.atualizarPowerup(null, 0);
 
         this._pool.desativarTodos();
-        for (let i = 0; i < 4; i++) {
-            this._pool.ativar(-20 - i * 30, NIVEL_INICIAL);
+        for (let i = 0; i < ARCOS_NO_POOL; i++) {
+            this._pool.ativar(-20 - i * 20, NIVEL_INICIAL);
         }
     }
 
@@ -516,7 +589,10 @@ class Game {
         this.mudarEstado('MENU');
     }
 
-    _aplicarPowerup(tipo) {
+    _aplicarPowerup(tipo, posicao) {
+        // Dispara explosão de partículas na posição de coleta
+        if (posicao) this._particulas.explodir(posicao, tipo);
+
         if (tipo === 'vida') {
             this._vidas++;
             this._hud.atualizarVidas(this._vidas);
@@ -545,6 +621,7 @@ class Game {
             }
 
             this._player.processarInput(this._input.estado);
+            this._particulas.atualizar(delta);
 
             const resultado = this._pool.atualizar(
                 this._velocidadeZ, this._player, this._nivelDificuldade, this._powerup
@@ -554,7 +631,7 @@ class Game {
                 this._pontos += 1 * this._powerup.multiplicador;
                 this._hud.atualizar(this._pontos);
             } else if (resultado && resultado.powerup) {
-                this._aplicarPowerup(resultado.powerup);
+                this._aplicarPowerup(resultado.powerup, resultado.posicao);
             } else if (resultado === 'GAMEOVER') {
                 this._vidas--;
                 this._hud.atualizarVidas(this._vidas);
