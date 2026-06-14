@@ -1,10 +1,15 @@
-// Constantes físicas globais 
-const RAIO_BOLA = 0.4;
-const RAIO_INTERNO_ARCO = 1.2;
-const RAIO_EXTERNO_ARCO = 1.6;
-const ARCOS_NO_POOL = 6;
-const LIMITE_DISPERSAO = 3;
-const RANKING_KEY = 'radarcos';
+// Constantes físicas globais
+const RAIO_BOLA          = 0.4;
+const RAIO_INTERNO_ARCO  = 1.2;
+const RAIO_EXTERNO_ARCO  = 1.6;
+const ARCOS_NO_POOL      = 6;
+const LIMITE_DISPERSAO   = 3;
+const RANKING_KEY        = 'radarcos';
+
+const VELOCIDADE_INICIAL  = 0.18; 
+const VELOCIDADE_MAXIMA   = 0.55;  
+const TEMPO_ESCALA        = 90000; 
+const NIVEL_INICIAL       = 1.0;   
 
 class InputManager {
     constructor() {
@@ -327,17 +332,18 @@ class Game {
     }
 
     _iniciarNovaPartida() {
-        this._pontos = 0;
-        this._velocidadeZ = 0.3;
-        this._nivelDificuldade = 1;
-        this._tempoDecorrido = 0;
+        this._pontos              = 0;
+        this._velocidadeZ         = VELOCIDADE_INICIAL;
+        this._nivelDificuldade    = NIVEL_INICIAL;
+        this._tempoDecorrido      = 0;
 
         this._player.moverParaJogo();
         this._hud.atualizar(this._pontos);
 
         this._pool.desativarTodos();
-        for (let i = 0; i < 6; i++) {
-            this._pool.ativar(-20 - i * 40, this._nivelDificuldade);
+        // Espaçamento fixo de 30 unidades entre arcos iniciais
+        for (let i = 0; i < 4; i++) {
+            this._pool.ativar(-20 - i * 30, NIVEL_INICIAL);
         }
     }
 
@@ -358,9 +364,18 @@ class Game {
         requestAnimationFrame(() => this._loop());
 
         if (this._estado === 'JOGANDO') {
-            this._tempoDecorrido += 16.66;
-            this._nivelDificuldade = 0.7 + this._tempoDecorrido / 30000;
-            this._velocidadeZ = 0.3 * this._nivelDificuldade;
+            this._tempoDecorrido   += 16.66;
+
+            // Curva de dificuldade suave:
+            //   t=0s  → nível 1.00 → vel 0.18 u/frame
+            //   t=30s → nível 1.33 → vel 0.24 u/frame
+            //   t=60s → nível 1.67 → vel 0.30 u/frame
+            //   t=90s → nível 2.00 → vel 0.36 u/frame (cap: 0.55)
+            this._nivelDificuldade = NIVEL_INICIAL + this._tempoDecorrido / TEMPO_ESCALA;
+            this._velocidadeZ      = Math.min(
+                VELOCIDADE_INICIAL * this._nivelDificuldade,
+                VELOCIDADE_MAXIMA
+            );
 
             this._player.processarInput(this._input.estado);
 
