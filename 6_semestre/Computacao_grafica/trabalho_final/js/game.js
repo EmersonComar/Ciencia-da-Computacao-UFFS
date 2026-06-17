@@ -1,399 +1,368 @@
 // Constantes físicas globais
-const RAIO_BOLA          = 0.4;
-const RAIO_INTERNO_ARCO  = 1.2;
-const RAIO_EXTERNO_ARCO  = 1.6;
+const RAIO_BOLA = 0.4;
+const RAIO_INTERNO_ARCO = 1.2;
+const RAIO_EXTERNO_ARCO = 1.6;
 
-const ALTURA_CUBO_FALHA   = 0.4;
+const ALTURA_CUBO_FALHA = 0.4;
 const COMPRIMENTO_CUBO_FALHA = 1.4;
 const PROFUNDIDADE_CUBO_FALHA = 0.2;
-const CHANCE_OBSTACULO        = 0.1;
+const CHANCE_OBSTACULO = 0.1;
 const CHANCE_MAXIMA_OBSTACULO = 0.3;
-const CHANCE_POWERUP          = 0.12;
+const CHANCE_POWERUP = 0.12;
 
-const ARCOS_NO_POOL      = 10;
-const LIMITE_DISPERSAO   = 3;
-const RANKING_KEY        = 'radarcos';
+const ARCOS_NO_POOL = 10;
+const LIMITE_DISPERSAO = 3;
+const RANKING_KEY = 'radarcos';
 
-const VELOCIDADE_INICIAL  = 0.18;
-const VELOCIDADE_MAXIMA   = 0.55;
-const TEMPO_ESCALA        = 90000;
-const NIVEL_INICIAL       = 1.0;
+const VELOCIDADE_INICIAL = 0.18;
+const VELOCIDADE_MAXIMA = 0.55;
+const TEMPO_ESCALA = 90000;
+const NIVEL_INICIAL = 1.0;
 
-const DURACAO_INVENCIVEL  = 5000;
-const DURACAO_MULTI       = 8000;
-const DURACAO_FORMA       = 8000;
-const MULTI_VALOR         = 3;
-const VIDAS_INICIAIS      = 1;
-const CHANCE_FORMA        = 0.04;
+const DURACAO_INVENCIVEL = 5000;
+const DURACAO_MULTI = 8000;
+const DURACAO_FORMA = 8000;
+const MULTI_VALOR = 3;
+const VIDAS_INICIAIS = 1;
+const CHANCE_FORMA = 0.04;
 
-class InputManager {
-    constructor() {
-        this.estado = { Esquerda: false, Direita: false, Cima: false, Baixo: false };
+function criarInputManager() {
+    var estado = { Esquerda: false, Direita: false, Cima: false, Baixo: false };
 
-        this._onKeyDown = this._onKeyDown.bind(this);
-        this._onKeyUp = this._onKeyUp.bind(this);
-
-        window.addEventListener('keydown', this._onKeyDown);
-        window.addEventListener('keyup', this._onKeyUp);
+    function setTecla(key, valor) {
+        if (key === 'ArrowLeft' || key === 'a' || key === 'A') estado.Esquerda = valor;
+        if (key === 'ArrowRight' || key === 'd' || key === 'D') estado.Direita = valor;
+        if (key === 'ArrowUp' || key === 'w' || key === 'W') estado.Cima = valor;
+        if (key === 'ArrowDown' || key === 's' || key === 'S') estado.Baixo = valor;
     }
 
-    _onKeyDown(e) {
-        this._setTecla(e.key, true);
+    function onKeyDown(e) { setTecla(e.key, true); }
+    function onKeyUp(e) { setTecla(e.key, false); }
+
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+
+    function destruir() {
+        window.removeEventListener('keydown', onKeyDown);
+        window.removeEventListener('keyup', onKeyUp);
     }
 
-    _onKeyUp(e) {
-        this._setTecla(e.key, false);
-    }
-
-    _setTecla(key, valor) {
-        if (key === 'ArrowLeft' || key === 'a' || key === 'A') this.estado.Esquerda = valor;
-        if (key === 'ArrowRight' || key === 'd' || key === 'D') this.estado.Direita = valor;
-        if (key === 'ArrowUp' || key === 'w' || key === 'W') this.estado.Cima = valor;
-        if (key === 'ArrowDown' || key === 's' || key === 'S') this.estado.Baixo = valor;
-    }
-    destruir() {
-        window.removeEventListener('keydown', this._onKeyDown);
-        window.removeEventListener('keyup', this._onKeyUp);
-    }
+    return { estado: estado, destruir: destruir };
 }
 
-class HUD {
-    constructor() {
-        this._elHUD        = document.getElementById('hud');
-        this._elPontos     = document.getElementById('hud-pontos');
-        this._elVidas      = document.getElementById('hud-vidas');
-        this._elPowerup    = document.getElementById('hud-powerup');
-        this._elPUNome     = document.getElementById('hud-powerup-nome');
-        this._elPUTempo    = document.getElementById('hud-powerup-tempo');
+function criarHUD() {
+    var elHUD = document.getElementById('hud');
+    var elPontos = document.getElementById('hud-pontos');
+    var elVidas = document.getElementById('hud-vidas');
+    var elPowerup = document.getElementById('hud-powerup');
+    var elPUNome = document.getElementById('hud-powerup-nome');
+    var elPUTempo = document.getElementById('hud-powerup-tempo');
+
+    function mostrar(visivel) { elHUD.style.display = visivel ? 'block' : 'none'; }
+    function atualizar(pontos) { elPontos.textContent = pontos; }
+    function atualizarVidas(vidas) { elVidas.textContent = '❤️'.repeat(Math.max(0, vidas)); }
+    function atualizarPowerup(nome, tempoRestanteMs) {
+        if (!nome) { elPowerup.style.display = 'none'; return; }
+        elPowerup.style.display = 'inline';
+        elPUNome.textContent = nome;
+        elPUTempo.textContent = Math.ceil(tempoRestanteMs / 1000);
     }
 
-    mostrar(visivel) {
-        this._elHUD.style.display = visivel ? 'block' : 'none';
-    }
-
-    atualizar(pontos) {
-        this._elPontos.textContent = pontos;
-    }
-
-    atualizarVidas(vidas) {
-        this._elVidas.textContent = '❤️'.repeat(Math.max(0, vidas));
-    }
-
-    atualizarPowerup(nome, tempoRestanteMs) {
-        if (!nome) {
-            this._elPowerup.style.display = 'none';
-            return;
-        }
-        this._elPowerup.style.display = 'inline';
-        this._elPUNome.textContent     = nome;
-        this._elPUTempo.textContent    = Math.ceil(tempoRestanteMs / 1000);
-    }
+    return { mostrar: mostrar, atualizar: atualizar, atualizarVidas: atualizarVidas, atualizarPowerup: atualizarPowerup };
 }
 
-class RankingManager {
-    constructor(maxEntradas = 5) {
-        this._max = maxEntradas;
-    }
+function criarRankingManager(maxEntradas) {
+    var max = maxEntradas || 5;
 
-    carregar() {
+    function carregar() {
         return JSON.parse(localStorage.getItem(RANKING_KEY)) || [];
     }
 
-    salvar(nome, pontuacao) {
-        const ranking = this.carregar();
-        ranking.push({ nome, pontuacao });
-        ranking.sort((a, b) => b.pontuacao - a.pontuacao);
-        localStorage.setItem(RANKING_KEY, JSON.stringify(ranking.slice(0, this._max)));
+    function salvar(nome, pontuacao) {
+        var ranking = carregar();
+        ranking.push({ nome: nome, pontuacao: pontuacao });
+        ranking.sort(function (a, b) { return b.pontuacao - a.pontuacao; });
+        localStorage.setItem(RANKING_KEY, JSON.stringify(ranking.slice(0, max)));
     }
 
-    renderizarHTML(listaOL) {
-        const ranking = this.carregar();
+    function renderizarHTML(listaOL) {
+        var ranking = carregar();
         listaOL.innerHTML = '';
-
         if (ranking.length === 0) {
             listaOL.innerHTML = '<li>Nenhum recorde ainda!</li>';
             return;
         }
-
-        ranking.forEach(item => {
-            const li = document.createElement('li');
-            li.innerHTML = `<strong>${item.nome}</strong> - ${item.pontuacao} pts`;
+        ranking.forEach(function (item) {
+            var li = document.createElement('li');
+            li.innerHTML = '<strong>' + item.nome + '</strong> - ' + item.pontuacao + ' pts';
             listaOL.appendChild(li);
         });
     }
 
-    limpar() {
-        localStorage.removeItem(RANKING_KEY);
-    }
+    function limpar() { localStorage.removeItem(RANKING_KEY); }
+
+    return { carregar: carregar, salvar: salvar, renderizarHTML: renderizarHTML, limpar: limpar };
 }
 
-class SceneManager {
-    constructor(containerId) {
-        this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0xffffff);
+function criarSceneManager(containerId) {
+    var scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xffffff);
 
-        this.camera = new THREE.PerspectiveCamera(
-            60, window.innerWidth / window.innerHeight, 0.1, 1000
-        );
-        this.camera.position.set(0, 0, 5);
+    var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 5);
 
-        this.renderer = new THREE.WebGLRenderer({ antialias: true });
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        document.getElementById(containerId).appendChild(this.renderer.domElement);
+    var renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.getElementById(containerId).appendChild(renderer.domElement);
 
-        this.ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
-        this.scene.add(this.ambientLight);
-        this.dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-        this.dirLight.position.set(5, 10, 7);
-        this.scene.add(this.dirLight);
+    var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    dirLight.position.set(5, 10, 7);
+    scene.add(dirLight);
 
-        this._onResize = this._onResize.bind(this);
-        window.addEventListener('resize', this._onResize);
+    function onResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
     }
+    window.addEventListener('resize', onResize);
 
-    _onResize() {
-        this.camera.aspect = window.innerWidth / window.innerHeight;
-        this.camera.updateProjectionMatrix();
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-    }
+    function render() { renderer.render(scene, camera); }
+    function destruir() { window.removeEventListener('resize', onResize); }
 
-    render() {
-        this.renderer.render(this.scene, this.camera);
-    }
-
-    destruir() {
-        window.removeEventListener('resize', this._onResize);
-    }
+    return { scene: scene, camera: camera, renderer: renderer, render: render, destruir: destruir };
 }
 
-class Player {
-    constructor(scene) {
-        this._scene = scene;
-        this.mesh   = new THREE.Object3D();
-        this.mesh.name = 'airplane';
 
-        // ── Materiais ──────────────────────────────────────────────────────
-        this._matBody   = new THREE.MeshStandardMaterial({ color: 0xcc2200, flatShading: true });
-        this._matEngine = new THREE.MeshStandardMaterial({ color: 0xeeeeee, flatShading: true });
-        this._matProp   = new THREE.MeshStandardMaterial({ color: 0x8B4513, flatShading: true });
-        this._matBlade  = new THREE.MeshStandardMaterial({ color: 0x3D1C02, flatShading: true });
-        this._matGlass  = new THREE.MeshStandardMaterial({
-            color: 0xaaddff, transparent: true, opacity: 0.35, flatShading: true
-        });
+function criarPlayer(scene) {
+    var mesh = new THREE.Object3D();
+    mesh.name = 'airplane';
 
-        // ── Fuselagem (orientada em Z: nariz em -Z, cauda em +Z) ──────────
-        const fuselage = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 1.3), this._matBody);
-        this.mesh.add(fuselage);
+    // Materiais
+    var matBody = new THREE.MeshStandardMaterial({ color: 0xcc2200, flatShading: true });
+    var matEngine = new THREE.MeshStandardMaterial({ color: 0xeeeeee, flatShading: true });
+    var matProp = new THREE.MeshStandardMaterial({ color: 0x8B4513, flatShading: true });
+    var matBlade = new THREE.MeshStandardMaterial({ color: 0x3D1C02, flatShading: true });
+    var matGlass = new THREE.MeshStandardMaterial({ color: 0xaaddff, transparent: true, opacity: 0.35, flatShading: true });
 
-        // ── Motor (nariz, -Z) ─────────────────────────────────────────────
-        const engine = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.22), this._matEngine);
-        engine.position.set(0, 0, -0.76);
-        this.mesh.add(engine);
+    // Fuselagem
+    var fuselage = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 1.3), matBody);
+    mesh.add(fuselage);
 
-        // ── Asas principais ───────────────────────────────────────────────
-        const wings = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.06, 0.38), this._matBody);
-        wings.position.set(0, 0.06, 0.1);
-        this.mesh.add(wings);
+    // Motor
+    var engine = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.22), matEngine);
+    engine.position.set(0, 0, -0.76);
+    mesh.add(engine);
 
-        // ── Estabilizador vertical (cauda) ────────────────────────────────
-        const tailV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.27, 0.2), this._matBody);
-        tailV.position.set(0, 0.22, 0.57);
-        this.mesh.add(tailV);
+    // Asas
+    var wings = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.06, 0.38), matBody);
+    wings.position.set(0, 0.06, 0.1);
+    mesh.add(wings);
 
-        // ── Estabilizador horizontal (cauda) ──────────────────────────────
-        const tailH = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.17), this._matBody);
-        tailH.position.set(0, 0.08, 0.57);
-        this.mesh.add(tailH);
+    // Estabilizador vertical
+    var tailV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.27, 0.2), matBody);
+    tailV.position.set(0, 0.22, 0.57);
+    mesh.add(tailV);
 
-        // ── Para-brisa ────────────────────────────────────────────────────
-        const windshield = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.07), this._matGlass);
-        windshield.position.set(0, 0.26, -0.18);
-        this.mesh.add(windshield);
+    // Estabilizador horizontal
+    var tailH = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.17), matBody);
+    tailH.position.set(0, 0.08, 0.57);
+    mesh.add(tailH);
 
-        // ── Hélice (grupo que gira) ────────────────────────────────────────
-        this._propGroup = new THREE.Object3D();
-        this._propGroup.position.set(0, 0, -0.9);
+    // Para-brisa
+    var windshield = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.07), matGlass);
+    windshield.position.set(0, 0.26, -0.18);
+    mesh.add(windshield);
 
-        const hub = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), this._matProp);
-        this._propGroup.add(hub);
+    // Helice
+    var propGroup = new THREE.Object3D();
+    propGroup.position.set(0, 0, -0.9);
 
-        const bladeGeo = new THREE.BoxGeometry(0.06, 0.72, 0.08);
-        const blade1   = new THREE.Mesh(bladeGeo, this._matBlade);
-        this._propGroup.add(blade1);
-        const blade2   = new THREE.Mesh(bladeGeo, this._matBlade);
-        blade2.rotation.z = Math.PI / 2;
-        this._propGroup.add(blade2);
+    var hub = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), matProp);
+    propGroup.add(hub);
 
-        this.mesh.add(this._propGroup);
+    var bladeGeo = new THREE.BoxGeometry(0.06, 0.72, 0.08);
+    var blade1 = new THREE.Mesh(bladeGeo, matBlade);
+    propGroup.add(blade1);
+    var blade2 = new THREE.Mesh(bladeGeo, matBlade);
+    blade2.rotation.z = Math.PI / 2;
+    propGroup.add(blade2);
 
-        scene.add(this.mesh);
+    mesh.add(propGroup);
+    scene.add(mesh);
+
+    function resetar() {
+        mesh.position.set(0, -2, 0);
+        mesh.rotation.set(0, 0, 0);
+        matBody.color.setHex(0xcc2200);
     }
 
-    _resetar() {
-        this.mesh.position.set(0, -2, 0);
-        this.mesh.rotation.set(0, 0, 0);
-        this._matBody.color.setHex(0xcc2200);
+    function moverParaMenu() { resetar(); }
+    function moverParaJogo() { resetar(); }
+
+    function atualizarCor(tipoPowerup) {
+        var cores = { forma_velocidade: 0x9900ff, forma_pontos: 0x111111, forma_chance: 0x22cc22 };
+        matBody.color.setHex(cores[tipoPowerup] || 0xcc2200);
     }
 
-    moverParaMenu() { this._resetar(); }
-    moverParaJogo() { this._resetar(); }
-
-    atualizarCor(tipoPowerup) {
-        const cores = {
-            forma_velocidade: 0x9900ff,
-            forma_pontos:     0x111111,
-            forma_chance:     0x22cc22,
-        };
-        this._matBody.color.setHex(cores[tipoPowerup] || 0xcc2200);
-    }
-
-    processarInput(input, velocidadeMulti = 1) {
-        const vel = 0.1 * velocidadeMulti;
-        const pos = this.mesh.position;
-
-        // Inclinação visual suave proporcional ao movimento
-        const alvoZ = input.Esquerda ? 0.4 : (input.Direita ? -0.4 : 0);
-        const alvoX = input.Cima    ? -0.18 : (input.Baixo ? 0.18 : 0);
-        this.mesh.rotation.z += (alvoZ - this.mesh.rotation.z) * 0.12;
-        this.mesh.rotation.x += (alvoX - this.mesh.rotation.x) * 0.12;
-
+    function processarInput(input, velocidadeMulti) {
+        velocidadeMulti = velocidadeMulti || 1;
+        var vel = 0.1 * velocidadeMulti;
+        var pos = mesh.position;
+        var alvoZ = input.Esquerda ? 0.4 : (input.Direita ? -0.4 : 0);
+        var alvoX = input.Cima ? -0.18 : (input.Baixo ? 0.18 : 0);
+        mesh.rotation.z += (alvoZ - mesh.rotation.z) * 0.12;
+        mesh.rotation.x += (alvoX - mesh.rotation.x) * 0.12;
         if (input.Esquerda) pos.x -= vel;
-        if (input.Direita)  pos.x += vel;
-        if (input.Cima)     pos.y += vel;
-        if (input.Baixo)    pos.y -= vel;
+        if (input.Direita) pos.x += vel;
+        if (input.Cima) pos.y += vel;
+        if (input.Baixo) pos.y -= vel;
         pos.x = Math.max(Math.min(pos.x, 4), -4);
         pos.y = Math.max(Math.min(pos.y, 3), -3);
     }
 
-    atualizar() {
-        this._propGroup.rotation.z += 0.28; // hélice girando
+    function atualizar() { propGroup.rotation.z += 0.28; }
+
+    function destruir() {
+        [matBody, matEngine, matProp, matBlade, matGlass].forEach(function (m) { m.dispose(); });
+        scene.remove(mesh);
     }
 
-    destruir() {
-        [this._matBody, this._matEngine, this._matProp, this._matBlade, this._matGlass]
-            .forEach(m => m.dispose());
-        this._scene.remove(this.mesh);
-    }
+    function posX() { return mesh.position.x; }
+    function posY() { return mesh.position.y; }
+    function posZ() { return mesh.position.z; }
 
-    get posX() { return this.mesh.position.x; }
-    get posY() { return this.mesh.position.y; }
-    get posZ() { return this.mesh.position.z; }
+    return {
+        mesh: mesh,
+        moverParaMenu: moverParaMenu, moverParaJogo: moverParaJogo,
+        atualizarCor: atualizarCor, processarInput: processarInput,
+        atualizar: atualizar, destruir: destruir,
+        posX: posX, posY: posY, posZ: posZ
+    };
 }
 
-class PowerUpManager {
-    constructor() {
-        this.tipo          = null;
-        this.tempoRestante = 0;
+function criarPowerUpManager() {
+    var tipo = null;
+    var tempoRestante = 0;
+
+    function ativar(t) {
+        tipo = t;
+        if (t === 'invencivel') tempoRestante = DURACAO_INVENCIVEL;
+        else if (t === 'multi') tempoRestante = DURACAO_MULTI;
+        else if (t.startsWith('forma')) tempoRestante = DURACAO_FORMA;
+        else tempoRestante = 0;
     }
 
-    ativar(tipo) {
-        this.tipo = tipo;
-        if (tipo === 'invencivel')              this.tempoRestante = DURACAO_INVENCIVEL;
-        else if (tipo === 'multi')              this.tempoRestante = DURACAO_MULTI;
-        else if (tipo.startsWith('forma'))      this.tempoRestante = DURACAO_FORMA;
-        else                                    this.tempoRestante = 0;
-    }
-
-    tick(deltams) {
-        if (!this.tipo || this.tipo === 'vida') return false;
-        this.tempoRestante -= deltams;
-        if (this.tempoRestante <= 0) {
-            this.tipo          = null;
-            this.tempoRestante = 0;
-            return true;
-        }
+    function tick(deltams) {
+        if (!tipo || tipo === 'vida') return false;
+        tempoRestante -= deltams;
+        if (tempoRestante <= 0) { tipo = null; tempoRestante = 0; return true; }
         return false;
     }
 
-    get ativo()           { return this.tipo !== null; }
-    get invencivel()      { return this.tipo === 'invencivel'; }
-    get multiplicador()   { return this.tipo === 'multi' ? MULTI_VALOR : 1; }
-    get velocidadeMulti() { return this.tipo === 'forma_velocidade' ? 3 : 1; }
-    get pontosBase()      { return this.tipo === 'forma_pontos'     ? 2 : 1; }
-    get chanceBonus()     { return this.tipo === 'forma_chance'     ? 0.15 : 0; }
+    function ativo() { return tipo !== null; }
+    function invencivel() { return tipo === 'invencivel'; }
+    function multiplicador() { return tipo === 'multi' ? MULTI_VALOR : 1; }
+    function velocidadeMulti() { return tipo === 'forma_velocidade' ? 3 : 1; }
+    function pontosBase() { return tipo === 'forma_pontos' ? 2 : 1; }
+    function chanceBonus() { return tipo === 'forma_chance' ? 0.15 : 0; }
+    function getTipo() { return tipo; }
+    function getTempoRestante() { return tempoRestante; }
+
+    return {
+        ativar: ativar, tick: tick,
+        ativo: ativo, invencivel: invencivel,
+        multiplicador: multiplicador, velocidadeMulti: velocidadeMulti,
+        pontosBase: pontosBase, chanceBonus: chanceBonus,
+        getTipo: getTipo, getTempoRestante: getTempoRestante
+    };
 }
 
-class ArcoPool {
-    constructor(scene, tamanho) {
-        this._scene = scene;
+function criarArcoPool(scene, tamanho) {
+    var geo = new THREE.TorusGeometry(RAIO_INTERNO_ARCO, (RAIO_EXTERNO_ARCO - RAIO_INTERNO_ARCO) / 2, 8, 24);
+    var geoFalha = new THREE.BoxGeometry(COMPRIMENTO_CUBO_FALHA, ALTURA_CUBO_FALHA, PROFUNDIDADE_CUBO_FALHA);
+    var geoVida = new THREE.OctahedronGeometry(0.5);
+    var geoInvenc = new THREE.DodecahedronGeometry(0.45);
+    var geoMulti = new THREE.TetrahedronGeometry(0.55);
+    var geoForma = new THREE.SphereGeometry(0.45, 12, 12);
 
-        this._geo = new THREE.TorusGeometry(
-            RAIO_INTERNO_ARCO,
-            (RAIO_EXTERNO_ARCO - RAIO_INTERNO_ARCO) / 2,
-            8, 24
-        );
+    var matAzul = new THREE.MeshStandardMaterial({ color: 0x00aaff });
+    var matVerde = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+    var matVermelho = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+    var matVida = new THREE.MeshStandardMaterial({ color: 0x00ff88 });
+    var matInvenc = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
+    var matMulti = new THREE.MeshStandardMaterial({ color: 0xcc00ff });
+    // Power-ups de transformacao
+    var matFVel = new THREE.MeshStandardMaterial({ color: 0x9900ff }); // roxo
+    var matFPts = new THREE.MeshStandardMaterial({ color: 0x222222 }); // preto
+    var matFChc = new THREE.MeshStandardMaterial({ color: 0x22cc22 }); // verde
 
-        this._geoFalha = new THREE.BoxGeometry(
-            COMPRIMENTO_CUBO_FALHA,
-            ALTURA_CUBO_FALHA,
-            PROFUNDIDADE_CUBO_FALHA
-        );
-
-        this._matAzul     = new THREE.MeshStandardMaterial({ color: 0x00aaff });
-        this._matVerde    = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-        this._matVermelho = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-
-        this._matVida     = new THREE.MeshStandardMaterial({ color: 0x00ff88 });
-        this._matInvenc   = new THREE.MeshStandardMaterial({ color: 0xffcc00 });
-        this._matMulti    = new THREE.MeshStandardMaterial({ color: 0xcc00ff });
-        // Materiais e geometria dos power-ups de transformação (esfera = transforma o player)
-        this._geoForma    = new THREE.SphereGeometry(0.45, 12, 12);
-        this._matFVel     = new THREE.MeshStandardMaterial({ color: 0x9900ff }); // roxo
-        this._matFPts     = new THREE.MeshStandardMaterial({ color: 0x222222 }); // preto
-        this._matFChc     = new THREE.MeshStandardMaterial({ color: 0x22cc22 }); // verde
-
-        this._geoVida     = new THREE.OctahedronGeometry(0.5);
-        this._geoInvenc   = new THREE.DodecahedronGeometry(0.45);
-        this._geoMulti    = new THREE.TetrahedronGeometry(0.55);
-
-
-        this._pool = [];
-        for (let i = 0; i < tamanho; i++) {
-            const mesh = new THREE.Mesh(this._geo, this._matAzul);
-            mesh.visible = false;
-            mesh.userData = { ativo: false, passou: false, tipo: 'arco' };
-            scene.add(mesh);
-            this._pool.push(mesh);
-        }
-
-        this._ativos = [];
+    function geoParaTipo(tipo) {
+        if (tipo === 'falha') return geoFalha;
+        if (tipo === 'vida') return geoVida;
+        if (tipo === 'invencivel') return geoInvenc;
+        if (tipo === 'multi') return geoMulti;
+        if (tipo.startsWith('forma')) return geoForma;
+        return geo;
     }
 
-    _geoParaTipo(tipo) {
-        if (tipo === 'falha')            return this._geoFalha;
-        if (tipo === 'vida')             return this._geoVida;
-        if (tipo === 'invencivel')       return this._geoInvenc;
-        if (tipo === 'multi')            return this._geoMulti;
-        if (tipo.startsWith('forma'))    return this._geoForma;
-        return this._geo;
-    }
-    _matParaTipo(tipo) {
-        if (tipo === 'falha')             return this._matVermelho;
-        if (tipo === 'vida')             return this._matVida;
-        if (tipo === 'invencivel')       return this._matInvenc;
-        if (tipo === 'multi')            return this._matMulti;
-        if (tipo === 'forma_velocidade') return this._matFVel;
-        if (tipo === 'forma_pontos')     return this._matFPts;
-        if (tipo === 'forma_chance')     return this._matFChc;
-        return this._matAzul;
+    function matParaTipo(tipo) {
+        if (tipo === 'falha') return matVermelho;
+        if (tipo === 'vida') return matVida;
+        if (tipo === 'invencivel') return matInvenc;
+        if (tipo === 'multi') return matMulti;
+        if (tipo === 'forma_velocidade') return matFVel;
+        if (tipo === 'forma_pontos') return matFPts;
+        if (tipo === 'forma_chance') return matFChc;
+        return matAzul;
     }
 
-    ativar(posZ, nivelDificuldade, powerup = null) {
-        const mesh = this._pool.find(m => !m.userData.ativo);
-        if (!mesh) return;
+    var pool = [];
+    for (var i = 0; i < tamanho; i++) {
+        var m = new THREE.Mesh(geo, matAzul);
+        m.visible = false;
+        m.userData = { ativo: false, passou: false, tipo: 'arco' };
+        scene.add(m);
+        pool.push(m);
+    }
 
-        const r             = Math.random();
-        const chanceBonus   = powerup ? powerup.chanceBonus : 0;
-        const chanceObst    = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
-        let tipo;
+    var ativos = [];
+
+    function getMenorZ() {
+        var z = 0;
+        for (var i = 0; i < ativos.length; i++) { if (ativos[i].position.z < z) z = ativos[i].position.z; }
+        return z;
+    }
+
+    function desativar(obj) {
+        obj.visible = false;
+        obj.userData.ativo = false;
+        obj.userData.passou = false;
+        var idx = ativos.indexOf(obj);
+        if (idx !== -1) ativos.splice(idx, 1);
+    }
+
+    function desativarTodos() {
+        var copia = ativos.slice();
+        for (var i = 0; i < copia.length; i++) desativar(copia[i]);
+    }
+
+    function ativar(posZ, nivelDificuldade, powerup) {
+        var obj = null;
+        for (var i = 0; i < pool.length; i++) { if (!pool[i].userData.ativo) { obj = pool[i]; break; } }
+        if (!obj) return;
+
+        var r = Math.random();
+        var chanceBonus = powerup ? powerup.chanceBonus() : 0;
+        var chanceObst = Math.min(CHANCE_OBSTACULO + nivelDificuldade * 0.05, CHANCE_MAXIMA_OBSTACULO);
+        var tipo;
 
         if (r < CHANCE_FORMA) {
-            // Power-up de transformação — chance baixissíma (~1,3% cada)
-            const rF = Math.random();
+            var rF = Math.random();
             tipo = rF < 0.33 ? 'forma_velocidade' : rF < 0.66 ? 'forma_pontos' : 'forma_chance';
         } else if (r < CHANCE_FORMA + CHANCE_POWERUP + chanceBonus) {
-            // Power-up normal (bola verde aumenta esta faixa)
-            const rPU = Math.random();
+            var rPU = Math.random();
             tipo = rPU < 0.4 ? 'vida' : rPU < 0.7 ? 'invencivel' : 'multi';
         } else if (r < CHANCE_FORMA + CHANCE_POWERUP + chanceBonus + chanceObst) {
             tipo = 'falha';
@@ -401,83 +370,64 @@ class ArcoPool {
             tipo = 'arco';
         }
 
-        const maxDisp = Math.min(LIMITE_DISPERSAO, 1 + nivelDificuldade * 0.4);
-        mesh.position.set(
-            (Math.random() - 0.5) * maxDisp * 2,
-            (Math.random() - 0.5) * maxDisp * 2,
-            posZ
-        );
-
-        
-        mesh.rotation.set(0, 0, 0);
-
-        mesh.geometry        = this._geoParaTipo(tipo);
-        mesh.material        = this._matParaTipo(tipo);
-        mesh.userData.tipo   = tipo;
-        mesh.userData.ativo  = true;
-        mesh.userData.passou = false;
-        mesh.visible         = true;
-        this._ativos.push(mesh);
+        var maxDisp = Math.min(LIMITE_DISPERSAO, 1 + nivelDificuldade * 0.4);
+        obj.position.set((Math.random() - 0.5) * maxDisp * 2, (Math.random() - 0.5) * maxDisp * 2, posZ);
+        obj.rotation.set(0, 0, 0);
+        obj.geometry = geoParaTipo(tipo);
+        obj.material = matParaTipo(tipo);
+        obj.userData.tipo = tipo;
+        obj.userData.ativo = true;
+        obj.userData.passou = false;
+        obj.visible = true;
+        ativos.push(obj);
     }
 
-    _desativar(mesh) {
-        mesh.visible = false;
-        mesh.userData.ativo = false;
-        mesh.userData.passou = false;
-        const idx = this._ativos.indexOf(mesh);
-        if (idx !== -1) this._ativos.splice(idx, 1);
-    }
+    function atualizar(velocidadeZ, player, nivelDificuldade, powerup) {
+        var resultado = null;
 
-    desativarTodos() {
-        [...this._ativos].forEach(m => this._desativar(m));
-    }
-
-    atualizar(velocidadeZ, player, nivelDificuldade, powerup) {
-        let resultado = null;
-
-        for (let i = this._ativos.length - 1; i >= 0; i--) {
-            const obj = this._ativos[i];
+        for (var i = ativos.length - 1; i >= 0; i--) {
+            var obj = ativos[i];
             obj.position.z += velocidadeZ;
+
             if (obj.userData.tipo !== 'arco' && obj.userData.tipo !== 'falha') {
                 obj.rotation.y += 0.04;
                 obj.rotation.x += 0.02;
             }
 
-            if (!obj.userData.passou && obj.position.z >= player.posZ) {
-                const tipo = obj.userData.tipo;
+            if (!obj.userData.passou && obj.position.z >= player.posZ()) {
+                var tipo = obj.userData.tipo;
 
                 if (tipo === 'arco') {
-                    const dx   = player.posX - obj.position.x;
-                    const dy   = player.posY - obj.position.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    var dx = player.posX() - obj.position.x;
+                    var dy = player.posY() - obj.position.y;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist <= RAIO_INTERNO_ARCO - RAIO_BOLA) {
                         obj.userData.passou = true;
-                        obj.material        = this._matVerde;
-                        resultado           = 'SUCESSO';
+                        obj.material = matVerde;
+                        resultado = 'SUCESSO';
                     } else if (dist <= RAIO_EXTERNO_ARCO + RAIO_BOLA) {
-                        if (powerup && powerup.invencivel) {
+                        if (powerup && powerup.invencivel()) {
                             obj.userData.passou = true;
-                            obj.material        = this._matVerde;
-                            resultado           = 'SUCESSO';
+                            obj.material = matVerde;
+                            resultado = 'SUCESSO';
                         } else {
-                            obj.userData.passou = true; 
+                            obj.userData.passou = true;
                             return 'GAMEOVER';
                         }
                     }
 
                 } else if (tipo === 'falha') {
-                    const metadeLargura = COMPRIMENTO_CUBO_FALHA / 2 + RAIO_BOLA;
-                    const metadeAltura  = ALTURA_CUBO_FALHA / 2 + RAIO_BOLA;
-                    const colidiu =
-                        Math.abs(player.posX - obj.position.x) < metadeLargura &&
-                        Math.abs(player.posY - obj.position.y) < metadeAltura;
+                    var metadeLargura = COMPRIMENTO_CUBO_FALHA / 2 + RAIO_BOLA;
+                    var metadeAltura = ALTURA_CUBO_FALHA / 2 + RAIO_BOLA;
+                    var colidiu = Math.abs(player.posX() - obj.position.x) < metadeLargura &&
+                        Math.abs(player.posY() - obj.position.y) < metadeAltura;
 
                     if (colidiu) {
-                        if (powerup && powerup.invencivel) {
-                            obj.userData.passou = true; 
+                        if (powerup && powerup.invencivel()) {
+                            obj.userData.passou = true;
                         } else {
-                            obj.userData.passou = true; 
+                            obj.userData.passou = true;
                             return 'GAMEOVER';
                         }
                     } else {
@@ -485,69 +435,55 @@ class ArcoPool {
                     }
 
                 } else {
-                    const dx   = player.posX - obj.position.x;
-                    const dy   = player.posY - obj.position.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (dist <= RAIO_BOLA + 0.6) {
+                    var dx2 = player.posX() - obj.position.x;
+                    var dy2 = player.posY() - obj.position.y;
+                    var dist2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+                    if (dist2 <= RAIO_BOLA + 0.6) {
                         resultado = { powerup: tipo, posicao: obj.position.clone() };
-                        this._desativar(obj);
-                        let menorZ = 0;
-                        this._ativos.forEach(a => { if (a.position.z < menorZ) menorZ = a.position.z; });
-                        this.ativar(menorZ - 20, nivelDificuldade, powerup);
+                        desativar(obj);
+                        ativar(getMenorZ() - 20, nivelDificuldade, powerup);
                     }
                 }
             }
 
             if (obj.position.z > 5) {
-                this._desativar(obj);
-                let menorZ = 0;
-                this._ativos.forEach(a => { if (a.position.z < menorZ) menorZ = a.position.z; });
-                this.ativar(menorZ - 20, nivelDificuldade, powerup);
+                desativar(obj);
+                ativar(getMenorZ() - 20, nivelDificuldade, powerup);
             }
         }
 
         return resultado;
     }
 
-    get menorZ() {
-        let z = 0;
-        this._ativos.forEach(a => { if (a.position.z < z) z = a.position.z; });
-        return z;
+    function destruir() {
+        [geo, geoFalha, geoVida, geoInvenc, geoMulti, geoForma]
+            .forEach(function (g) { g.dispose(); });
+        [matAzul, matVerde, matVermelho, matVida, matInvenc, matMulti, matFVel, matFPts, matFChc]
+            .forEach(function (mat) { mat.dispose(); });
     }
 
-    destruir() {
-        this._geo.dispose();     this._geoFalha.dispose();
-        this._geoVida.dispose(); this._geoInvenc.dispose(); this._geoMulti.dispose();
-        this._geoForma.dispose();
-        this._matAzul.dispose();    this._matVerde.dispose();   this._matVermelho.dispose();
-        this._matVida.dispose();    this._matInvenc.dispose();  this._matMulti.dispose();
-        this._matFVel.dispose();    this._matFPts.dispose();    this._matFChc.dispose();
-    }
+    return { ativar: ativar, desativarTodos: desativarTodos, atualizar: atualizar, destruir: destruir };
 }
 
 
-class ParticleSystem {
-    static CORES = {
+function criarParticleSystem(scene) {
+    var CORES = {
         vida: 0x00ff88, invencivel: 0xffcc00, multi: 0xcc00ff,
-        forma_velocidade: 0x9900ff, forma_pontos: 0x888888, forma_chance: 0x22cc22,
+        forma_velocidade: 0x9900ff, forma_pontos: 0x888888, forma_chance: 0x22cc22
     };
 
-    constructor(scene) {
-        this._scene     = scene;
-        this._explosoes = []; 
-    }
+    var explosoes = [];
 
-    explodir(posicao, tipoPowerup) {
-        const cor      = ParticleSystem.CORES[tipoPowerup] || 0xffffff;
-        const N        = 24;
-        const posArr   = new Float32Array(N * 3);
-        const vels     = [];
+    function explodir(posicao, tipoPowerup) {
+        var cor = CORES[tipoPowerup] || 0xffffff;
+        var N = 24;
+        var posArr = new Float32Array(N * 3);
+        var vels = [];
 
-        for (let i = 0; i < N; i++) {
-            posArr[i * 3]     = posicao.x;
+        for (var i = 0; i < N; i++) {
+            posArr[i * 3] = posicao.x;
             posArr[i * 3 + 1] = posicao.y;
             posArr[i * 3 + 2] = posicao.z;
-
             vels.push(new THREE.Vector3(
                 (Math.random() - 0.5) * 0.25,
                 (Math.random() - 0.5) * 0.25,
@@ -555,32 +491,28 @@ class ParticleSystem {
             ));
         }
 
-        const geo = new THREE.BufferGeometry();
+        var geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.BufferAttribute(posArr, 3));
 
-        const mat = new THREE.PointsMaterial({
-            color:          cor,
-            size:           0.18,
-            sizeAttenuation: true,
-            transparent:    true,
-            opacity:        1.0,
-            depthWrite:     false,
+        var mat = new THREE.PointsMaterial({
+            color: cor, size: 0.18, sizeAttenuation: true,
+            transparent: true, opacity: 1.0, depthWrite: false
         });
 
-        const points = new THREE.Points(geo, mat);
-        this._scene.add(points);
-        this._explosoes.push({ points, geo, mat, vels, tempo: 0, duracao: 450 });
+        var points = new THREE.Points(geo, mat);
+        scene.add(points);
+        explosoes.push({ points: points, geo: geo, mat: mat, vels: vels, tempo: 0, duracao: 450 });
     }
 
-    atualizar(delta) {
-        for (let i = this._explosoes.length - 1; i >= 0; i--) {
-            const exp      = this._explosoes[i];
-            exp.tempo     += delta;
-            const progresso = exp.tempo / exp.duracao; // 0 → 1
-            const arr      = exp.geo.attributes.position.array;
+    function atualizar(delta) {
+        for (var i = explosoes.length - 1; i >= 0; i--) {
+            var exp = explosoes[i];
+            exp.tempo += delta;
+            var progresso = exp.tempo / exp.duracao;
+            var arr = exp.geo.attributes.position.array;
 
-            for (let j = 0; j < exp.vels.length; j++) {
-                arr[j * 3]     += exp.vels[j].x;
+            for (var j = 0; j < exp.vels.length; j++) {
+                arr[j * 3] += exp.vels[j].x;
                 arr[j * 3 + 1] += exp.vels[j].y;
                 arr[j * 3 + 2] += exp.vels[j].z;
                 exp.vels[j].multiplyScalar(0.90);
@@ -589,185 +521,166 @@ class ParticleSystem {
             exp.mat.opacity = Math.max(0, 1 - progresso);
 
             if (exp.tempo >= exp.duracao) {
-                this._scene.remove(exp.points);
+                scene.remove(exp.points);
                 exp.geo.dispose();
                 exp.mat.dispose();
-                this._explosoes.splice(i, 1);
+                explosoes.splice(i, 1);
             }
         }
     }
+
+    return { explodir: explodir, atualizar: atualizar };
 }
 
-class Game {
-    constructor() {
-        this._scene    = new SceneManager('canvas-container');
-        this._input    = new InputManager();
-        this._hud      = new HUD();
-        this._ranking  = new RankingManager(5);
-        this._player     = new Player(this._scene.scene);
-        this._pool       = new ArcoPool(this._scene.scene, ARCOS_NO_POOL);
-        this._particulas = new ParticleSystem(this._scene.scene);
+function iniciarJogo() {
+    var sceneManager = criarSceneManager('canvas-container');
+    var input = criarInputManager();
+    var hud = criarHUD();
+    var ranking = criarRankingManager(5);
+    var player = criarPlayer(sceneManager.scene);
+    var pool = criarArcoPool(sceneManager.scene, ARCOS_NO_POOL);
+    var particulas = criarParticleSystem(sceneManager.scene);
 
-        this._telas = {
-            menu: document.getElementById('menu-inicial'),
-            hud: document.getElementById('hud'),
-            gameOver: document.getElementById('tela-game-over'),
-            ranking: document.getElementById('tela-ranking'),
-        };
-        this._elPontosFinais = document.getElementById('pontos-finais');
-        this._elListaRanking = document.getElementById('lista-ranking');
-        this._elNomeJogador = document.getElementById('nome-jogador');
+    var telas = {
+        menu: document.getElementById('menu-inicial'),
+        hud: document.getElementById('hud'),
+        gameOver: document.getElementById('tela-game-over'),
+        ranking: document.getElementById('tela-ranking')
+    };
+    var elPontosFinais = document.getElementById('pontos-finais');
+    var elListaRanking = document.getElementById('lista-ranking');
+    var elNomeJogador = document.getElementById('nome-jogador');
 
-        document.getElementById('btn-jogar').addEventListener('click', () => this.mudarEstado('JOGANDO'));
-        document.getElementById('btn-ranking-menu').addEventListener('click', () => this.mudarEstado('RANKING'));
-        document.getElementById('btn-salvar-ranking').addEventListener('click', () => this._salvarEIrParaRanking());
-        document.getElementById('btn-jogar-novamente').addEventListener('click', () => this.mudarEstado('JOGANDO'));
-        document.getElementById('btn-voltar-menu').addEventListener('click', () => this.mudarEstado('MENU'));
-        document.getElementById('btn-limpar-ranking').addEventListener('click', () => this._limparRanking());
+    var estado = null;
+    var pontos = 0;
+    var velocidadeZ = 0.3;
+    var nivelDificuldade = 1;
+    var tempoDecorrido = 0;
+    var vidas = VIDAS_INICIAIS;
+    var powerup = criarPowerUpManager();
 
-        this._estado           = null;
-        this._pontos           = 0;
-        this._velocidadeZ      = 0.3;
-        this._nivelDificuldade = 1;
-        this._tempoDecorrido   = 0;
-        this._vidas            = VIDAS_INICIAIS;
-        this._powerup          = new PowerUpManager();
+    var NOMES_PU = {
+        invencivel: '⚡ Invencível',
+        multi: '✖️ x' + MULTI_VALOR,
+        forma_velocidade: '🟣 Turbo',
+        forma_pontos: '⚫ x2 pts',
+        forma_chance: '🟢 +Sorte'
+    };
 
-        this.mudarEstado('MENU');
-        this._loop();
-    }
+    document.getElementById('btn-jogar').addEventListener('click', function () { mudarEstado('JOGANDO'); });
+    document.getElementById('btn-ranking-menu').addEventListener('click', function () { mudarEstado('RANKING'); });
+    document.getElementById('btn-salvar-ranking').addEventListener('click', salvarEIrParaRanking);
+    document.getElementById('btn-jogar-novamente').addEventListener('click', function () { mudarEstado('JOGANDO'); });
+    document.getElementById('btn-voltar-menu').addEventListener('click', function () { mudarEstado('MENU'); });
+    document.getElementById('btn-limpar-ranking').addEventListener('click', limparRanking);
 
-    mudarEstado(novoEstado) {
-        this._estado = novoEstado;
+    function mudarEstado(novoEstado) {
+        estado = novoEstado;
+        Object.values(telas).forEach(function (el) { el.style.display = 'none'; });
 
-        Object.values(this._telas).forEach(el => el.style.display = 'none');
-
-        switch (novoEstado) {
-            case 'MENU':
-                this._telas.menu.style.display = 'flex';
-                this._player.moverParaMenu();
-                this._pool.desativarTodos();
-                break;
-
-            case 'JOGANDO':
-                this._telas.hud.style.display = 'block';
-                this._iniciarNovaPartida();
-                break;
-
-            case 'GAMEOVER':
-                this._telas.gameOver.style.display = 'flex';
-                this._elPontosFinais.textContent = this._pontos;
-                this.desativarTodos()
-                break;
-
-            case 'RANKING':
-                this._telas.ranking.style.display = 'flex';
-                this._ranking.renderizarHTML(this._elListaRanking);
-                break;
+        if (novoEstado === 'MENU') {
+            telas.menu.style.display = 'flex';
+            player.moverParaMenu();
+            pool.desativarTodos();
+        } else if (novoEstado === 'JOGANDO') {
+            telas.hud.style.display = 'block';
+            iniciarNovaPartida();
+        } else if (novoEstado === 'GAMEOVER') {
+            telas.gameOver.style.display = 'flex';
+            elPontosFinais.textContent = pontos;
+            pool.desativarTodos();
+        } else if (novoEstado === 'RANKING') {
+            telas.ranking.style.display = 'flex';
+            ranking.renderizarHTML(elListaRanking);
         }
     }
 
-    _iniciarNovaPartida() {
-        this._pontos           = 0;
-        this._velocidadeZ      = VELOCIDADE_INICIAL;
-        this._nivelDificuldade = NIVEL_INICIAL;
-        this._tempoDecorrido   = 0;
-        this._vidas            = VIDAS_INICIAIS;
-        this._powerup          = new PowerUpManager();
+    function iniciarNovaPartida() {
+        pontos = 0;
+        velocidadeZ = VELOCIDADE_INICIAL;
+        nivelDificuldade = NIVEL_INICIAL;
+        tempoDecorrido = 0;
+        vidas = VIDAS_INICIAIS;
+        powerup = criarPowerUpManager();
 
-        this._player.moverParaJogo();
-        this._hud.atualizar(this._pontos);
-        this._hud.atualizarVidas(this._vidas);
-        this._hud.atualizarPowerup(null, 0);
+        player.moverParaJogo();
+        hud.atualizar(pontos);
+        hud.atualizarVidas(vidas);
+        hud.atualizarPowerup(null, 0);
 
-        this._pool.desativarTodos();
-        for (let i = 0; i < ARCOS_NO_POOL; i++) {
-            this._pool.ativar(-20 - i * 20, NIVEL_INICIAL);
+        pool.desativarTodos();
+        for (var i = 0; i < ARCOS_NO_POOL; i++) {
+            pool.ativar(-20 - i * 20, NIVEL_INICIAL);
         }
     }
 
-    _salvarEIrParaRanking() {
-        const nome = this._elNomeJogador.value.trim() || 'Anônimo';
-        this._ranking.salvar(nome, this._pontos);
-        this._elNomeJogador.value = '';
-        this.mudarEstado('RANKING');
+    function salvarEIrParaRanking() {
+        var nome = elNomeJogador.value.trim() || 'Anônimo';
+        ranking.salvar(nome, pontos);
+        elNomeJogador.value = '';
+        mudarEstado('RANKING');
     }
 
-    _limparRanking() {
-        this._ranking.limpar();
-        this._ranking.renderizarHTML(this._elListaRanking);
-        this.mudarEstado('MENU');
+    function limparRanking() {
+        ranking.limpar();
+        ranking.renderizarHTML(elListaRanking);
+        mudarEstado('MENU');
     }
 
-    _aplicarPowerup(tipo, posicao) {
-        if (posicao) this._particulas.explodir(posicao, tipo);
+    function aplicarPowerup(tipo, posicao) {
+        if (posicao) particulas.explodir(posicao, tipo);
 
         if (tipo === 'vida') {
-            this._vidas++;
-            this._hud.atualizarVidas(this._vidas);
+            vidas++;
+            hud.atualizarVidas(vidas);
         } else {
-            this._powerup.ativar(tipo);
-            const nomes = {
-                invencivel:       '⚡ Invencível',
-                multi:            `✖️ x${MULTI_VALOR}`,
-                forma_velocidade: '🟣 Turbo',
-                forma_pontos:     '⚫ x2 pts',
-                forma_chance:     '🟢 +Sorte',
-            };
-            this._hud.atualizarPowerup(nomes[tipo] || tipo, this._powerup.tempoRestante);
+            powerup.ativar(tipo);
+            hud.atualizarPowerup(NOMES_PU[tipo] || tipo, powerup.getTempoRestante());
         }
     }
 
-    _loop() {
-        requestAnimationFrame(() => this._loop());
+    function loop() {
+        requestAnimationFrame(loop);
 
-        if (this._estado === 'JOGANDO') {
-            const delta = 16.66;
-            this._tempoDecorrido   += delta;
-            this._nivelDificuldade  = NIVEL_INICIAL + this._tempoDecorrido / TEMPO_ESCALA;
-            this._velocidadeZ       = Math.min(VELOCIDADE_INICIAL * this._nivelDificuldade, VELOCIDADE_MAXIMA);
+        if (estado === 'JOGANDO') {
+            var delta = 16.66;
+            tempoDecorrido += delta;
+            nivelDificuldade = NIVEL_INICIAL + tempoDecorrido / TEMPO_ESCALA;
+            velocidadeZ = Math.min(VELOCIDADE_INICIAL * nivelDificuldade, VELOCIDADE_MAXIMA);
 
-            const expirou = this._powerup.tick(delta);
+            var expirou = powerup.tick(delta);
             if (expirou) {
-                this._hud.atualizarPowerup(null, 0);
-            } else if (this._powerup.ativo) {
-                const nomes = {
-                    invencivel:       '⚡ Invencível',
-                    multi:            `✖️ x${MULTI_VALOR}`,
-                    forma_velocidade: '🟣 Turbo',
-                    forma_pontos:     '⚫ x2 pts',
-                    forma_chance:     '🟢 +Sorte',
-                };
-                this._hud.atualizarPowerup(nomes[this._powerup.tipo] || '', this._powerup.tempoRestante);
+                hud.atualizarPowerup(null, 0);
+            } else if (powerup.ativo()) {
+                hud.atualizarPowerup(NOMES_PU[powerup.getTipo()] || '', powerup.getTempoRestante());
             }
 
-            this._player.processarInput(this._input.estado, this._powerup.velocidadeMulti);
-            this._player.atualizarCor(this._powerup.tipo);
-            this._player.atualizar();
-            this._particulas.atualizar(delta);
+            player.processarInput(input.estado, powerup.velocidadeMulti());
+            player.atualizarCor(powerup.getTipo());
+            player.atualizar();
+            particulas.atualizar(delta);
 
-            const resultado = this._pool.atualizar(
-                this._velocidadeZ, this._player, this._nivelDificuldade, this._powerup
-            );
+            var resultado = pool.atualizar(velocidadeZ, player, nivelDificuldade, powerup);
 
             if (resultado === 'SUCESSO') {
-                this._pontos += this._powerup.pontosBase * this._powerup.multiplicador;
-                this._hud.atualizar(this._pontos);
+                pontos += powerup.pontosBase() * powerup.multiplicador();
+                hud.atualizar(pontos);
             } else if (resultado && resultado.powerup) {
-                this._aplicarPowerup(resultado.powerup, resultado.posicao);
+                aplicarPowerup(resultado.powerup, resultado.posicao);
             } else if (resultado === 'GAMEOVER') {
-                this._vidas--;
-                this._hud.atualizarVidas(this._vidas);
-                if (this._vidas <= 0) {
-                    this.mudarEstado('GAMEOVER');
+                vidas--;
+                hud.atualizarVidas(vidas);
+                if (vidas <= 0) {
+                    mudarEstado('GAMEOVER');
                 }
             }
         }
 
-        this._scene.render();
+        sceneManager.render();
     }
+
+    mudarEstado('MENU');
+    loop();
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    new Game();
-});
+window.addEventListener('DOMContentLoaded', iniciarJogo);
