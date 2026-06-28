@@ -221,3 +221,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+
+# Coisas para que devem ser salvas
+!airplane.obj

@@ -138,64 +138,80 @@ function criarSceneManager(containerId) {
 function criarPlayer(scene) {
     var mesh = new THREE.Object3D();
     mesh.name = 'airplane';
-
-    // Materiais
-    var matBody = new THREE.MeshStandardMaterial({ color: 0xcc2200, flatShading: true });
-    var matEngine = new THREE.MeshStandardMaterial({ color: 0xeeeeee, flatShading: true });
-    var matProp = new THREE.MeshStandardMaterial({ color: 0x8B4513, flatShading: true });
-    var matBlade = new THREE.MeshStandardMaterial({ color: 0x3D1C02, flatShading: true });
-    var matGlass = new THREE.MeshStandardMaterial({ color: 0xaaddff, transparent: true, opacity: 0.35, flatShading: true });
-
-    // Fuselagem
-    var fuselage = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 1.3), matBody);
-    mesh.add(fuselage);
-
-    // Motor
-    var engine = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.22), matEngine);
-    engine.position.set(0, 0, -0.76);
-    mesh.add(engine);
-
-    // Asas
-    var wings = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.06, 0.38), matBody);
-    wings.position.set(0, 0.06, 0.1);
-    mesh.add(wings);
-
-    // Estabilizador vertical
-    var tailV = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.27, 0.2), matBody);
-    tailV.position.set(0, 0.22, 0.57);
-    mesh.add(tailV);
-
-    // Estabilizador horizontal
-    var tailH = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.17), matBody);
-    tailH.position.set(0, 0.08, 0.57);
-    mesh.add(tailH);
-
-    // Para-brisa
-    var windshield = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.2, 0.07), matGlass);
-    windshield.position.set(0, 0.26, -0.18);
-    mesh.add(windshield);
-
-    // Helice
-    var propGroup = new THREE.Object3D();
-    propGroup.position.set(0, 0, -0.9);
-
-    var hub = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), matProp);
-    propGroup.add(hub);
-
-    var bladeGeo = new THREE.BoxGeometry(0.06, 0.72, 0.08);
-    var blade1 = new THREE.Mesh(bladeGeo, matBlade);
-    propGroup.add(blade1);
-    var blade2 = new THREE.Mesh(bladeGeo, matBlade);
-    blade2.rotation.z = Math.PI / 2;
-    propGroup.add(blade2);
-
-    mesh.add(propGroup);
     scene.add(mesh);
+
+    var modelRotor = null;
+    var planeMaterial = null;
+    var modelLoaded = false;
+    var animandoEntrada = false;
+    var modelContainer = null;
+
+    if (typeof THREE.MTLLoader !== 'undefined' && typeof THREE.OBJLoader !== 'undefined') {
+        var mtlLoader = new THREE.MTLLoader();
+        mtlLoader.setPath('textura/airplane/');
+        mtlLoader.load('airplane.mtl', function (materials) {
+            materials.preload();
+
+            for (var matName in materials.materials) {
+                var m = materials.materials[matName];
+                m.flatShading = true;
+                if (matName === '01___Airplane') {
+                    planeMaterial = m;
+                }
+            }
+
+            var objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.setPath('textura/airplane/');
+            objLoader.load('airplane.obj', function (object) {
+                var bbox = new THREE.Box3().setFromObject(object);
+                var size = new THREE.Vector3();
+                bbox.getSize(size);
+                var center = new THREE.Vector3();
+                bbox.getCenter(center);
+
+                var rotationGroup1 = new THREE.Group();
+                rotationGroup1.add(object);
+                rotationGroup1.rotation.z = -Math.PI/2;
+
+                var rotationGroup2 = new THREE.Group();
+                rotationGroup2.add(rotationGroup1);
+                rotationGroup2.rotation.x = -Math.PI / 2;
+
+                modelContainer = new THREE.Group();
+                modelContainer.add(rotationGroup2);
+
+                var scale = 1.85 / size.y;
+                modelContainer.scale.set(scale, scale, scale);
+
+                object.traverse(function (child) {
+                    if (child.name === '11665_Rotor') {
+                        modelRotor = child;
+
+                        child.geometry.computeBoundingBox();
+                        var localCenter = new THREE.Vector3();
+                        child.geometry.boundingBox.getCenter(localCenter);
+
+                        child.geometry.center();
+
+                        child.position.copy(localCenter);
+                    }
+                });
+
+                mesh.add(modelContainer);
+                mesh.position.y = -10; 
+                animandoEntrada = true;
+                modelLoaded = true;
+            });
+        });
+    }
 
     function resetar() {
         mesh.position.set(0, -2, 0);
         mesh.rotation.set(0, 0, 0);
-        matBody.color.setHex(0xcc2200);
+        if (modelLoaded && planeMaterial) {
+            planeMaterial.color.setHex(0xffffff);
+        }
     }
 
     function moverParaMenu() { resetar(); }
@@ -203,10 +219,14 @@ function criarPlayer(scene) {
 
     function atualizarCor(tipoPowerup) {
         var cores = { forma_velocidade: 0x9900ff, forma_pontos: 0x111111, forma_chance: 0x22cc22 };
-        matBody.color.setHex(cores[tipoPowerup] || 0xcc2200);
+        if (modelLoaded && planeMaterial) {
+            planeMaterial.color.setHex(cores[tipoPowerup] || 0xffffff);
+        }
     }
 
     function processarInput(input, velocidadeMulti) {
+        if (!modelLoaded || animandoEntrada) return;
+
         velocidadeMulti = velocidadeMulti || 1;
         var vel = 0.1 * velocidadeMulti;
         var pos = mesh.position;
@@ -222,10 +242,34 @@ function criarPlayer(scene) {
         pos.y = Math.max(Math.min(pos.y, 3), -3);
     }
 
-    function atualizar() { propGroup.rotation.z += 0.28; }
+    function atualizar() {
+        if (!modelLoaded) return;
+
+        if (animandoEntrada) {
+            mesh.position.y += (-2 - mesh.position.y) * 0.05;
+            if (Math.abs(mesh.position.y - (-2)) < 0.02) {
+                mesh.position.y = -2;
+                animandoEntrada = false;
+            }
+        }
+
+        if (modelRotor) {
+            modelRotor.rotation.x += 0.28;
+        }
+    }
 
     function destruir() {
-        [matBody, matEngine, matProp, matBlade, matGlass].forEach(function (m) { m.dispose(); });
+        if (modelLoaded) {
+            mesh.traverse(function(child) {
+                if (child.isMesh) {
+                    if (child.geometry) child.geometry.dispose();
+                    if (child.material) {
+                        if (Array.isArray(child.material)) child.material.forEach(function(m) { m.dispose(); });
+                        else child.material.dispose();
+                    }
+                }
+            });
+        }
         scene.remove(mesh);
     }
 
@@ -233,12 +277,17 @@ function criarPlayer(scene) {
     function posY() { return mesh.position.y; }
     function posZ() { return mesh.position.z; }
 
+    function isReady() {
+        return modelLoaded && !animandoEntrada;
+    }
+
     return {
         mesh: mesh,
         moverParaMenu: moverParaMenu, moverParaJogo: moverParaJogo,
         atualizarCor: atualizarCor, processarInput: processarInput,
         atualizar: atualizar, destruir: destruir,
-        posX: posX, posY: posY, posZ: posZ
+        posX: posX, posY: posY, posZ: posZ,
+        isReady: isReady
     };
 }
 
@@ -280,7 +329,7 @@ function criarPowerUpManager() {
 }
 
 function criarArcoPool(scene, tamanho) {
-    var geo = new THREE.TorusGeometry(RAIO_INTERNO_ARCO, (RAIO_EXTERNO_ARCO - RAIO_INTERNO_ARCO) / 2, 8, 24);
+    var geo = new THREE.TorusGeometry(RAIO_INTERNO_ARCO, (RAIO_EXTERNO_ARCO - RAIO_INTERNO_ARCO) / 2, 8, 30);
     var geoFalha = new THREE.BoxGeometry(COMPRIMENTO_CUBO_FALHA, ALTURA_CUBO_FALHA, PROFUNDIDADE_CUBO_FALHA);
     var geoVida = new THREE.OctahedronGeometry(0.5);
     var geoInvenc = new THREE.DodecahedronGeometry(0.45);
@@ -413,6 +462,7 @@ function criarArcoPool(scene, tamanho) {
                             resultado = 'SUCESSO';
                         } else {
                             obj.userData.passou = true;
+                            obj.material = matVermelho;
                             return 'GAMEOVER';
                         }
                     }
@@ -426,6 +476,7 @@ function criarArcoPool(scene, tamanho) {
                     if (colidiu) {
                         if (powerup && powerup.invencivel()) {
                             obj.userData.passou = true;
+                            obj.material = matVerde;
                         } else {
                             obj.userData.passou = true;
                             return 'GAMEOVER';
@@ -567,7 +618,11 @@ function iniciarJogo() {
         forma_chance: '🟢 +Sorte'
     };
 
-    document.getElementById('btn-jogar').addEventListener('click', function () { mudarEstado('JOGANDO'); });
+    document.getElementById('btn-jogar').addEventListener('click', function () {
+        if (player.isReady()) {
+            mudarEstado('JOGANDO');
+        }
+    });
     document.getElementById('btn-ranking-menu').addEventListener('click', function () { mudarEstado('RANKING'); });
     document.getElementById('btn-salvar-ranking').addEventListener('click', salvarEIrParaRanking);
     document.getElementById('btn-jogar-novamente').addEventListener('click', function () { mudarEstado('JOGANDO'); });
@@ -672,6 +727,19 @@ function iniciarJogo() {
                 hud.atualizarVidas(vidas);
                 if (vidas <= 0) {
                     mudarEstado('GAMEOVER');
+                }
+            }
+        } else if (estado === 'MENU') {
+            player.atualizar();
+
+            var btnJogar = document.getElementById('btn-jogar');
+            if (btnJogar) {
+                if (player.isReady()) {
+                    btnJogar.removeAttribute('disabled');
+                    btnJogar.textContent = 'Jogar';
+                } else {
+                    btnJogar.setAttribute('disabled', 'true');
+                    btnJogar.textContent = 'Carregando avião...';
                 }
             }
         }
