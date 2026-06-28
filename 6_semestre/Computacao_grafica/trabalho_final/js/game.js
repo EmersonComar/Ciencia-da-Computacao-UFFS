@@ -106,7 +106,8 @@ function criarRankingManager(maxEntradas) {
 
 function criarSceneManager(containerId) {
     var scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xffffff);
+    scene.background = new THREE.Color(0xf7d9aa);
+    scene.fog = new THREE.Fog(0xf7d9aa, 100, 950);
 
     var camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(0, 0, 5);
@@ -115,10 +116,15 @@ function criarSceneManager(containerId) {
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.getElementById(containerId).appendChild(renderer.domElement);
 
-    var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    // Luzes estilizadas do The Aviator
+    var hemisphereLight = new THREE.HemisphereLight(0xaaaaaa, 0x000000, 0.9);
+    scene.add(hemisphereLight);
+
+    var ambientLight = new THREE.AmbientLight(0xdc8874, 0.5);
     scene.add(ambientLight);
+
     var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 7);
+    dirLight.position.set(150, 350, 350);
     scene.add(dirLight);
 
     function onResize() {
@@ -516,6 +522,172 @@ function criarArcoPool(scene, tamanho) {
     return { ativar: ativar, desativarTodos: desativarTodos, atualizar: atualizar, destruir: destruir };
 }
 
+function Sea() {
+    var radius = 600;
+    var length = 800;
+    var geom = new THREE.CylinderGeometry(radius, radius, length, 40, 10);
+    geom.rotateZ(Math.PI / 2);
+
+    var posAttr = geom.attributes.position;
+    var count = posAttr.count;
+
+    this.waves = [];
+    this.initialPositions = new Float32Array(count * 3);
+    for (var i = 0; i < count; i++) {
+        var x = posAttr.getX(i);
+        var y = posAttr.getY(i);
+        var z = posAttr.getZ(i);
+        this.initialPositions[i * 3] = x;
+        this.initialPositions[i * 3 + 1] = y;
+        this.initialPositions[i * 3 + 2] = z;
+
+        this.waves.push({
+            ang: Math.random() * Math.PI * 2,
+            amp: 0.8 + Math.random() * 1.5,
+            speed: 0.03 + Math.random() * 0.04
+        });
+    }
+
+    var mat = new THREE.MeshPhongMaterial({
+        color: 0x68c3c0,
+        transparent: true,
+        opacity: 0.8,
+        flatShading: true
+    });
+
+    this.mesh = new THREE.Mesh(geom, mat);
+    this.mesh.receiveShadow = true;
+
+    var self = this;
+    this.moveWaves = function() {
+        var pos = self.mesh.geometry.attributes.position;
+        var arr = pos.array;
+        for (var i = 0; i < count; i++) {
+            var wave = self.waves[i];
+            var ox = self.initialPositions[i * 3];
+            var oy = self.initialPositions[i * 3 + 1];
+            var oz = self.initialPositions[i * 3 + 2];
+
+            var lengthYZ = Math.sqrt(oy * oy + oz * oz);
+            var ny = oy / lengthYZ;
+            var nz = oz / lengthYZ;
+
+            var offset = Math.sin(wave.ang) * wave.amp;
+            arr[i * 3 + 1] = oy + ny * offset;
+            arr[i * 3 + 2] = oz + nz * offset;
+
+            wave.ang += wave.speed;
+        }
+        pos.needsUpdate = true;
+    };
+}
+
+function Cloud() {
+    this.mesh = new THREE.Group();
+    this.mesh.name = "cloud";
+    var geom = new THREE.BoxGeometry(20, 20, 20);
+    var mat = new THREE.MeshPhongMaterial({
+        color: 0xd8d0d1,
+        flatShading: true
+    });
+
+    var nBlocs = 3 + Math.floor(Math.random() * 3);
+    this.blocks = [];
+    for (var i = 0; i < nBlocs; i++) {
+        var m = new THREE.Mesh(geom, mat);
+        m.position.x = i * 15;
+        m.position.y = Math.random() * 10;
+        m.position.z = Math.random() * 10;
+        m.rotation.z = Math.random() * Math.PI * 2;
+        m.rotation.y = Math.random() * Math.PI * 2;
+        var s = 0.1 + Math.random() * 0.9;
+        m.scale.set(s, s, s);
+        m.castShadow = true;
+        m.receiveShadow = true;
+        this.mesh.add(m);
+        this.blocks.push({
+            mesh: m,
+            rotSpeedZ: Math.random() * 0.005,
+            rotSpeedY: Math.random() * 0.002
+        });
+    }
+
+    var self = this;
+    this.rotate = function() {
+        for (var i = 0; i < self.blocks.length; i++) {
+            var b = self.blocks[i];
+            b.mesh.rotation.z += b.rotSpeedZ;
+            b.mesh.rotation.y += b.rotSpeedY;
+        }
+    };
+}
+
+function Sky() {
+    this.mesh = new THREE.Group();
+    this.nClouds = 20;
+    this.clouds = [];
+    var stepAngle = Math.PI * 2 / this.nClouds;
+    var seaRadius = 600;
+
+    for (var i = 0; i < this.nClouds; i++) {
+        var c = new Cloud();
+        this.clouds.push(c);
+        var a = stepAngle * i;
+        var h = seaRadius + 150 + Math.random() * 200;
+        c.mesh.position.y = Math.sin(a) * h;
+        c.mesh.position.z = Math.cos(a) * h;
+        c.mesh.position.x = (Math.random() - 0.5) * 800;
+
+        c.mesh.rotation.x = a + Math.PI / 2;
+
+        var s = 1 + Math.random() * 2;
+        c.mesh.scale.set(s, s, s);
+        this.mesh.add(c.mesh);
+    }
+
+    var self = this;
+    this.moveClouds = function(speed) {
+        for (var i = 0; i < self.nClouds; i++) {
+            var c = self.clouds[i];
+            c.rotate();
+        }
+        self.mesh.rotation.x += speed;
+    };
+}
+
+function criarAmbientacao(scene) {
+    var sea = new Sea();
+    sea.mesh.position.y = -608;
+    scene.add(sea.mesh);
+
+    var sky = new Sky();
+    sky.mesh.position.y = -608;
+    scene.add(sky.mesh);
+
+    function atualizar(velocidadeZ) {
+        sea.mesh.rotation.x += velocidadeZ * 0.004;
+        if (sea.mesh.rotation.x > Math.PI * 2) {
+            sea.mesh.rotation.x -= Math.PI * 2;
+        }
+        sea.moveWaves();
+        sky.moveClouds(velocidadeZ * 0.001);
+    }
+
+    function destruir() {
+        if (sea.mesh.geometry) sea.mesh.geometry.dispose();
+        if (sea.mesh.material) sea.mesh.material.dispose();
+        sky.clouds.forEach(function(c) {
+            c.blocks.forEach(function(b) {
+                if (b.mesh.geometry) b.mesh.geometry.dispose();
+                if (b.mesh.material) b.mesh.material.dispose();
+            });
+        });
+        scene.remove(sea.mesh);
+        scene.remove(sky.mesh);
+    }
+
+    return { atualizar: atualizar, destruir: destruir };
+}
 
 function criarParticleSystem(scene) {
     var CORES = {
@@ -591,6 +763,7 @@ function iniciarJogo() {
     var player = criarPlayer(sceneManager.scene);
     var pool = criarArcoPool(sceneManager.scene, ARCOS_NO_POOL);
     var particulas = criarParticleSystem(sceneManager.scene);
+    var ambientacao = criarAmbientacao(sceneManager.scene);
 
     var telas = {
         menu: document.getElementById('menu-inicial'),
@@ -713,6 +886,7 @@ function iniciarJogo() {
             player.processarInput(input.estado, powerup.velocidadeMulti());
             player.atualizarCor(powerup.getTipo());
             player.atualizar();
+            ambientacao.atualizar(velocidadeZ);
             particulas.atualizar(delta);
 
             var resultado = pool.atualizar(velocidadeZ, player, nivelDificuldade, powerup);
@@ -731,15 +905,18 @@ function iniciarJogo() {
             }
         } else if (estado === 'MENU') {
             player.atualizar();
+            ambientacao.atualizar(0.1);
 
             var btnJogar = document.getElementById('btn-jogar');
+            var btnRanking = document.getElementById('btn-ranking-menu');
             if (btnJogar) {
                 if (player.isReady()) {
                     btnJogar.removeAttribute('disabled');
                     btnJogar.textContent = 'Jogar';
+                    btnRanking.style = "display: block"
                 } else {
                     btnJogar.setAttribute('disabled', 'true');
-                    btnJogar.textContent = 'Carregando avião...';
+                    btnJogar.textContent = 'Carregando...';
                 }
             }
         }
