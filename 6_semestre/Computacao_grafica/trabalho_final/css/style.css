@@ -1,8 +1,11 @@
+/* Identidade visual original — mínima e funcional */
+
 body {
     margin: 0;
     overflow: hidden;
     background-color: #111;
     font-family: sans-serif;
+    touch-action: none;
 }
 
 #canvas-container {
@@ -13,6 +16,21 @@ body {
     height: 100%;
     z-index: 1;
 }
+
+/* Tela de loading simples */
+.loading-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    transition: opacity 0.5s ease;
+}
+.loading-screen.fade-out { opacity: 0; pointer-events: none; }
 
 .ui-layer {
     position: absolute;
@@ -41,7 +59,6 @@ body {
     padding: 10px;
     border-radius: 5px;
     pointer-events: none;
-    /* Não bloqueia cliques */
     display: none;
 }
 
@@ -60,21 +77,10 @@ button:hover {
     background-color: #218838;
 }
 
-.btn-sair {
-    background-color: #dc3545;
-}
-
-.btn-voltar {
-    background-color: #9fa728;
-}
-
-.btn-sair:hover {
-    background-color: #c82333;
-}
-
-.btn-voltar:hover {
-    background-color: #8f9620;
-}
+.btn-sair   { background-color: #dc3545; }
+.btn-voltar { background-color: #9fa728; }
+.btn-sair:hover   { background-color: #c82333; }
+.btn-voltar:hover { background-color: #8f9620; }
 
 input {
     padding: 10px;
@@ -84,3 +90,44 @@ input {
     border: none;
     text-align: center;
 }
+
+/* D-pad mobile — simples e funcional */
+.dpad {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 52px);
+    grid-template-rows: repeat(3, 52px);
+    gap: 4px;
+}
+
+.dpad-btn {
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    touch-action: none;
+    user-select: none;
+}
+
+.dpad-btn:active,
+.dpad-btn.pressed {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.dpad-up    { grid-column: 2; grid-row: 1; }
+.dpad-left  { grid-column: 1; grid-row: 2; }
+.dpad-right { grid-column: 3; grid-row: 2; }
+.dpad-down  { grid-column: 2; grid-row: 3; }

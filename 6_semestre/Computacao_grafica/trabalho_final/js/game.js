@@ -42,6 +42,31 @@ function criarInputManager() {
     window.addEventListener('keydown', onKeyDown);
     window.addEventListener('keyup', onKeyUp);
 
+    // D-pad mobile
+    var isMobile = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (isMobile) {
+        var dpad = document.getElementById('dpad');
+        if (dpad) dpad.style.display = 'grid';
+
+        function bindDpad(id, campo) {
+            var btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('touchstart', function (e) {
+                e.preventDefault(); estado[campo] = true; btn.classList.add('pressed');
+            }, { passive: false });
+            btn.addEventListener('touchend', function (e) {
+                e.preventDefault(); estado[campo] = false; btn.classList.remove('pressed');
+            }, { passive: false });
+            btn.addEventListener('touchcancel', function () {
+                estado[campo] = false; btn.classList.remove('pressed');
+            });
+        }
+        bindDpad('dpad-up',    'Cima');
+        bindDpad('dpad-down',  'Baixo');
+        bindDpad('dpad-left',  'Esquerda');
+        bindDpad('dpad-right', 'Direita');
+    }
+
     function destruir() {
         window.removeEventListener('keydown', onKeyDown);
         window.removeEventListener('keyup', onKeyUp);
@@ -75,14 +100,17 @@ function criarRankingManager(maxEntradas) {
     var max = maxEntradas || 5;
 
     function carregar() {
-        return JSON.parse(localStorage.getItem(RANKING_KEY)) || [];
+        try { return JSON.parse(localStorage.getItem(RANKING_KEY)) || []; }
+        catch (e) { return []; }
     }
 
     function salvar(nome, pontuacao) {
-        var ranking = carregar();
-        ranking.push({ nome: nome, pontuacao: pontuacao });
-        ranking.sort(function (a, b) { return b.pontuacao - a.pontuacao; });
-        localStorage.setItem(RANKING_KEY, JSON.stringify(ranking.slice(0, max)));
+        try {
+            var ranking = carregar();
+            ranking.push({ nome: nome, pontuacao: pontuacao });
+            ranking.sort(function (a, b) { return b.pontuacao - a.pontuacao; });
+            localStorage.setItem(RANKING_KEY, JSON.stringify(ranking.slice(0, max)));
+        } catch (e) { /* modo privado — ignora */ }
     }
 
     function renderizarHTML(listaOL) {
@@ -99,7 +127,7 @@ function criarRankingManager(maxEntradas) {
         });
     }
 
-    function limpar() { localStorage.removeItem(RANKING_KEY); }
+    function limpar() { try { localStorage.removeItem(RANKING_KEY); } catch (e) {} }
 
     return { carregar: carregar, salvar: salvar, renderizarHTML: renderizarHTML, limpar: limpar };
 }
@@ -867,11 +895,23 @@ function iniciarJogo() {
         }
     }
 
-    function loop() {
+    // Cache de refs DOM (evita getElementById a cada frame)
+    var _btnJogar   = document.getElementById('btn-jogar');
+    var _btnRanking = document.getElementById('btn-ranking-menu');
+    var _telaLoading = document.getElementById('tela-loading');
+    var _loadingBar  = document.getElementById('loading-bar');
+    var _loadingStatus = document.getElementById('loading-status');
+    var _modelReadyHandled = false;
+
+    // Delta time real
+    var _lastTime = performance.now();
+
+    function loop(agora) {
         requestAnimationFrame(loop);
+        var delta = Math.min((agora - _lastTime) || 16.66, 100);
+        _lastTime = agora;
 
         if (estado === 'JOGANDO') {
-            var delta = 16.66;
             tempoDecorrido += delta;
             nivelDificuldade = NIVEL_INICIAL + tempoDecorrido / TEMPO_ESCALA;
             velocidadeZ = Math.min(VELOCIDADE_INICIAL * nivelDificuldade, VELOCIDADE_MAXIMA);
@@ -907,16 +947,23 @@ function iniciarJogo() {
             player.atualizar();
             ambientacao.atualizar(0.1);
 
-            var btnJogar = document.getElementById('btn-jogar');
-            var btnRanking = document.getElementById('btn-ranking-menu');
-            if (btnJogar) {
-                if (player.isReady()) {
-                    btnJogar.removeAttribute('disabled');
-                    btnJogar.textContent = 'Jogar';
-                    btnRanking.style = "display: block"
-                } else {
-                    btnJogar.setAttribute('disabled', 'true');
-                    btnJogar.textContent = 'Carregando...';
+            // Atualiza loading/botão somente quando o modelo termina de carregar
+            if (!_modelReadyHandled && player.isReady()) {
+                _modelReadyHandled = true;
+                if (_loadingStatus) _loadingStatus.textContent = 'Pronto!';
+                if (_loadingBar)    _loadingBar.style.width = '100%';
+                if (_telaLoading) {
+                    setTimeout(function () {
+                        _telaLoading.classList.add('fade-out');
+                        setTimeout(function () { _telaLoading.style.display = 'none'; }, 650);
+                    }, 300);
+                }
+                if (_btnJogar) {
+                    _btnJogar.removeAttribute('disabled');
+                    _btnJogar.textContent = '✈ Jogar';
+                }
+                if (_btnRanking) {
+                    _btnRanking.style.display = 'block';
                 }
             }
         }

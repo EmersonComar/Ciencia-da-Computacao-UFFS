@@ -2,14 +2,27 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="RADaviator – Jogo 3D de aviação no browser. Pilote seu avião pelos arcos, colete power-ups e bata recordes!">
+    <meta name="theme-color" content="#111111">
+    <meta property="og:title" content="RADaviator – Jogo 3D">
+    <meta property="og:description" content="Pilote seu avião pelos arcos, colete power-ups e bata recordes!">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://aviator.emersoncomar.com.br">
+
     <title>Jogo dos Arcos 3D</title>
     <link rel="stylesheet" href="css/style.css">
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
 </head>
 <body>
+
+    <!-- Tela de loading -->
+    <div id="tela-loading" class="loading-screen">
+        <p id="loading-status">Carregando modelo do avião...</p>
+    </div>
 
     <div id="hud" class="hud">
         Pontos: <span id="hud-pontos">0</span> &nbsp;|&nbsp;
@@ -41,6 +54,14 @@
         <button id="btn-jogar-novamente">Jogar Novamente</button>
         <button id="btn-voltar-menu" class="btn-voltar">Voltar ao Menu</button>
         <button id="btn-limpar-ranking" class="btn-sair">Limpar Ranking</button>
+    </div>
+
+    <!-- D-pad para mobile -->
+    <div id="dpad" class="dpad" style="display:none;">
+        <button class="dpad-btn dpad-up"    id="dpad-up">▲</button>
+        <button class="dpad-btn dpad-left"  id="dpad-left">◀</button>
+        <button class="dpad-btn dpad-down"  id="dpad-down">▼</button>
+        <button class="dpad-btn dpad-right" id="dpad-right">▶</button>
     </div>
 
     <script src="js/game.js"></script>
