@@ -13,6 +13,8 @@ int main() {
         Circulo circulo(raio);
 
         circulo.imprime_area();
+
+        circulo.imprime_perimetro();
     }
     catch (const exception &e) {
         cerr << "exception: " << e.what() << "\n";

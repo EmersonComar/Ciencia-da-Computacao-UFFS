@@ -8,6 +8,9 @@ public:
     
     double calcula_area();
     void imprime_area();
+
+    double calcula_perimetro();
+    void imprime_perimetro();
 private:
     double raio_;
 };

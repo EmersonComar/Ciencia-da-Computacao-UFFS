@@ -19,3 +19,11 @@ double Circulo::calcula_area() {
 void Circulo::imprime_area() {
     cout << "Area: " << calcula_area() << "\n";
 }
+
+double Circulo::calcula_perimetro() {
+    return (2 * raio_ * 3.1416);
+}
+
+void Circulo::imprime_perimetro() {
+    cout << "Perimetro: " << calcula_perimetro() << "\n";
+}
